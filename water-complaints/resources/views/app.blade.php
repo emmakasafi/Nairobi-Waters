@@ -1,50 +1,40 @@
+{{-- resources/views/layouts/app.blade.php --}}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Water Complaints</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <!-- AdminLTE and Bootstrap styles -->
-    <link rel="stylesheet" href="{{ mix('css/app.css') }}">
+    <title>{{ config('app.name', 'Laravel') }}</title>
 
-    <!-- AdminLTE FontAwesome (optional but useful) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.bunny.net/css" />
+    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+
+    <!-- Styles -->
+    @livewireStyles
 </head>
-<body class="hold-transition sidebar-mini layout-fixed">
-    <div class="wrapper">
-        {{-- Navbar --}}
-        @include('layouts.navbar')
+<body class="bg-gray-100">
+    <div class="relative flex items-top justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
+        @include('layouts.partials.header')
 
-        {{-- Sidebar --}}
-        @include('layouts.sidebar')
-
-        {{-- Content Wrapper --}}
+        <!-- Content Wrapper -->
         <div class="content-wrapper">
-            {{-- Content Header --}}
-            <div class="content-header">
-                <div class="container-fluid">
-                    <div class="row mb-2">
-                        <div class="col-sm-6">
-                            <h1 class="m-0">@yield('page-title', 'Dashboard')</h1>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Main Content --}}
-            <section class="content">
-                <div class="container-fluid">
-                    @yield('content')
-                </div>
-            </section>
+            @yield('content')
         </div>
+        <!-- /.Content Wrapper -->
 
-        {{-- Footer --}}
-        @include('layouts.footer')
+        <!-- Control Sidebar -->
+        <aside class="control-sidebar control-sidebar dark">
+            <!-- Control Sidebar Content Goes Here -->
+        </aside>
+        <!-- /.control-sidebar -->
+
+        <!-- Main Footer -->
+        <footer class="main-footer text-center">
+            @include('layouts.partials.footer')
+        </footer>
     </div>
-
-    <!-- Scripts -->
-    <script src="{{ mix('js/app.js') }}"></script>
 </body>
 </html>
