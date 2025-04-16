@@ -97,9 +97,23 @@
                 <p class="mt-4 text-gray-600 text-sm leading-relaxed">
                     Track the status of your submitted complaints. Our system provides real-time updates to keep you informed about the resolution process.
                 </p>
-                <a href="{{ route('login') }}" class="button">Login</a>
+                <button class="button" onclick="showLoginOptions()">Login</button>
             </div>
         </div>
     </div>
+
+    <div id="login-options" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 items-center justify-center">
+        <div class="bg-white p-8 rounded shadow-md w-96">
+            <h2 class="text-2xl font-semibold mb-6">Login Options</h2>
+            <a href="{{ route('admin.login') }}" class="button block mb-4">Login as Admin</a>
+            <a href="{{ route('customer.login') }}" class="button block">Login as Customer</a>
+        </div>
+    </div>
+
+    <script>
+        function showLoginOptions() {
+            document.getElementById('login-options').classList.toggle('hidden');
+        }
+    </script>
 </body>
 </html>

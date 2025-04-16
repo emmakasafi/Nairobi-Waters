@@ -11,7 +11,8 @@
                 <h1 class="text-4xl font-semibold text-gray-900 dark:text-white">
                     Welcome to the Dashboard
                 </h1>
-                <p class="mt-4 text-lg text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+                <p class="mt-4 text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
+
                     This is your dashboard page where you can monitor and manage all water-related complaints in Nairobi.
                 </p>
                 <div class="mt-6 space-y-4">
