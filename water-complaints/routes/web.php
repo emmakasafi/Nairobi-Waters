@@ -6,6 +6,7 @@ use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\Auth\AdminLoginController;
 use App\Http\Controllers\Auth\CustomerLoginController;
 use App\Http\Controllers\Auth\CustomerLogoutController;
+use App\Http\Controllers\WaterSentimentController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -55,7 +56,6 @@ Route::get('/admin/dashboard', function () {
     return view('admin-dashboard');
 })->middleware(['auth:admin', 'role:admin'])->name('admin.dashboard');
 
-
 // Admin Logout Route
 Route::post('/admin/logout', function (Request $request) {
     Auth::guard('admin')->logout();
@@ -63,8 +63,6 @@ Route::post('/admin/logout', function (Request $request) {
     $request->session()->regenerateToken();
     return redirect('/');
 })->middleware('auth:admin')->name('admin.logout');
-
-
 
 // Profile Routes (Authenticated)
 Route::middleware('auth')->group(function () {
@@ -84,5 +82,14 @@ Route::middleware('auth')->group(function () {
 // Registration Routes
 Route::get('/register', [Auth\RegisterController::class, 'showRegistrationForm'])->name('register');
 Route::post('/register', [Auth\RegisterController::class, 'register'])->name('register.submit');
+
+// Water Sentiment Routes
+Route::get('/water_sentiments', [WaterSentimentController::class, 'index'])->name('water_sentiments');
+Route::get('/water_sentiments/{id}', [WaterSentimentController::class, 'show'])->name('water_sentiments.show');
+Route::get('/water_sentiments/{id}/edit', [WaterSentimentController::class, 'edit'])->name('water_sentiments.edit');
+Route::post('/water_sentiments/{id}', [WaterSentimentController::class, 'update'])->name('water_sentiments.update');
+Route::delete('/water_sentiments/{id}', [WaterSentimentController::class, 'destroy'])->name('water_sentiments.destroy');
+Route::get('/search', [WaterSentimentController::class, 'search'])->name('search');
+Route::get('/water_sentiments/data', [WaterSentimentController::class, 'dataTable'])->name('water_sentiments.data');
 
 require __DIR__.'/auth.php';
