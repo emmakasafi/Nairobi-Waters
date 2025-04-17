@@ -9,6 +9,18 @@
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
     <div class="bg-white p-8 rounded shadow-md w-96">
         <h2 class="text-2xl font-semibold mb-6">Customer Login</h2>
+        @if ($errors->any())
+            <div class="mb-4">
+                <ul>
+                    @foreach ($errors->all() as $error)
+                        <li class="text-red-500">{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+        @if (session('error'))
+            <div class="mb-4 text-red-500">{{ session('error') }}</div>
+        @endif
         <form action="{{ route('customer.login') }}" method="POST">
             @csrf
             <div class="mb-4">

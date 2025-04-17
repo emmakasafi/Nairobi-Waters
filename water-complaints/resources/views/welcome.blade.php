@@ -99,6 +99,13 @@
                 </p>
                 <button class="button" onclick="showLoginOptions()">Login</button>
             </div>
+            <div class="card">
+                <h2 class="text-xl font-semibold text-gray-900">Register</h2>
+                <p class="mt-4 text-gray-600 text-sm leading-relaxed">
+                    Sign up to start submitting and tracking water complaints.
+                </p>
+                <a href="{{ route('register') }}" class="button">Register</a>
+            </div>
         </div>
     </div>
 

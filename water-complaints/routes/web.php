@@ -6,16 +6,20 @@ use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\Auth\AdminLoginController;
 use App\Http\Controllers\Auth\CustomerLoginController;
 use App\Http\Controllers\Auth\CustomerLogoutController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
+// Home Route
 Route::get('/', function () {
     return view('welcome');
 });
 
+// Home Route (Authenticated)
 Route::get('/home', function () {
     return view('home');
 })->middleware(['auth'])->name('home');
 
+// Dashboard Route (Authenticated and Verified)
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
@@ -34,35 +38,51 @@ Route::get('/customer/login', function () {
 
 Route::post('/customer/login', [CustomerLoginController::class, 'login'])->name('customer.login.submit');
 
-// Admin Dashboard Route
-Route::get('/admin/dashboard', function () {
-    return view('admin-dashboard');
-})->middleware(['auth', 'role:admin'])->name('admin.dashboard');
-
 // Customer Dashboard Route
 Route::get('/customer/dashboard', function () {
     return view('customer-dashboard');
-})->middleware(['auth', 'role:user'])->name('customer.dashboard');
+})->middleware(['auth:customer', 'role:user'])->name('customer.dashboard');
+
+// Customer Logout Route
+Route::post('/customer/logout', [CustomerLogoutController::class, 'logout'])->name('customer.logout');
+
+// Admin Login Routes
+Route::get('/admin/login', [AdminLoginController::class, 'showLoginForm'])->name('admin.login');
+Route::post('/admin/login', [AdminLoginController::class, 'login'])->name('admin.login.submit');
+
+// Admin Dashboard Route
+Route::get('/admin/dashboard', function () {
+    return view('admin-dashboard');
+})->middleware(['auth:admin', 'role:admin'])->name('admin.dashboard');
+
 
 // Admin Logout Route
 Route::post('/admin/logout', function (Request $request) {
-    Auth::logout();
+    Auth::guard('admin')->logout();
     $request->session()->invalidate();
     $request->session()->regenerateToken();
     return redirect('/');
-})->middleware('auth')->name('admin.logout');
+})->middleware('auth:admin')->name('admin.logout');
 
-/// Customer Logout Route
-Route::post('/customer/logout', [CustomerLogoutController::class, 'logout'])->name('customer.logout');
 
+
+// Profile Routes (Authenticated)
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->middleware('auth')->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+// Dashboard and Complaint Routes (Authenticated)
+Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/complaints', [ComplaintController::class, 'index'])->name('complaints.index');
     Route::get('/complaints/create', [ComplaintController::class, 'create'])->name('complaints.create');
     Route::post('/complaints', [ComplaintController::class, 'store'])->name('complaints.store');
 });
+
+// Registration Routes
+Route::get('/register', [Auth\RegisterController::class, 'showRegistrationForm'])->name('register');
+Route::post('/register', [Auth\RegisterController::class, 'register'])->name('register.submit');
 
 require __DIR__.'/auth.php';

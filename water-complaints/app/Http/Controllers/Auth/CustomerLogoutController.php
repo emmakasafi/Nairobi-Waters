@@ -10,14 +10,14 @@ class CustomerLogoutController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware('auth:customer'); // Ensure this middleware uses the 'customer' guard
     }
 
     public function logout(Request $request)
     {
-        Auth::logout();
+        Auth::guard('customer')->logout(); // Specify the 'customer' guard for logout
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect('/');
+        return redirect()->route('customer.login'); // Redirect to the customer login route
     }
 }

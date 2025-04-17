@@ -2,42 +2,37 @@
 
 namespace App\Http\Controllers\Auth;
 
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class AdminLoginController extends Controller
 {
-    /**
-     * Show the admin login form.
-     *
-     * @return \Illuminate\View\View
-     */
     public function showLoginForm()
     {
         return view('auth.admin-login');
     }
 
-    /**
-     * Handle the admin login request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
     public function login(Request $request)
     {
-        $credentials = $request->validate([
+        $this->validate($request, [
             'email' => 'required|email',
             'password' => 'required',
         ]);
 
-        if (Auth::attempt(['email' => $credentials['email'], 'password' => $credentials['password'], 'role' => 'admin'])) {
-            $request->session()->regenerate();
-            return redirect()->intended('/admin/dashboard');
+        if (Auth::guard('admin')->attempt(['email' => $request->email, 'password' => $request->password], $request->filled('remember'))) {
+            $user = Auth::guard('admin')->user();
+            Log::info('Admin login attempt successful for user: ' . $user->email);
+            if ($user->role === 'admin') {
+                return redirect()->intended('/admin/dashboard');
+            } else {
+                Auth::guard('admin')->logout();
+                return back()->with('error', 'You do not have admin access.');
+            }
+        } else {
+            Log::info('Admin login attempt failed for email: ' . $request->email);
+            return back()->withInput($request->only('email', 'remember'))->with('error', 'Invalid credentials.');
         }
-
-        return back()->withErrors([
-            'email' => 'The provided credentials do not match our records.',
-        ])->onlyInput('email');
     }
 }

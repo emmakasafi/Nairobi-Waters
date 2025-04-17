@@ -2,42 +2,34 @@
 
 namespace App\Http\Controllers\Auth;
 
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class CustomerLoginController extends Controller
 {
-    /**
-     * Show the customer login form.
-     *
-     * @return \Illuminate\View\View
-     */
     public function showLoginForm()
     {
         return view('auth.customer-login');
     }
 
-    /**
-     * Handle the customer login request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
     public function login(Request $request)
     {
-        $credentials = $request->validate([
+        $this->validate($request, [
             'email' => 'required|email',
             'password' => 'required',
         ]);
 
-        if (Auth::attempt(['email' => $credentials['email'], 'password' => $credentials['password'], 'role' => 'user'])) {
-            $request->session()->regenerate();
-            return redirect()->intended('/customer/dashboard');
+        if (Auth::guard('customer')->attempt(['email' => $request->email, 'password' => $request->password], $request->filled('remember'))) {
+            $user = Auth::guard('customer')->user();
+            if ($user->role === 'user') { // Check the role
+                return redirect('/customer/dashboard'); //redirect to the customer dashboard
+            } else {
+                Auth::guard('customer')->logout();
+                return back()->with('error', 'You do not have customer access.');
+            }
         }
 
-        return back()->withErrors([
-            'email' => 'The provided credentials do not match our records.',
-        ])->onlyInput('email');
+        return back()->withInput($request->only('email', 'remember'))->with('error', 'Invalid credentials.');
     }
 }
