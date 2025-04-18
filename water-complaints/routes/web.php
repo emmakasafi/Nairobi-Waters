@@ -91,5 +91,6 @@ Route::post('/water_sentiments/{id}', [WaterSentimentController::class, 'update'
 Route::delete('/water_sentiments/{id}', [WaterSentimentController::class, 'destroy'])->name('water_sentiments.destroy');
 Route::get('/search', [WaterSentimentController::class, 'search'])->name('search');
 Route::get('/water_sentiments/data', [WaterSentimentController::class, 'dataTable'])->name('water_sentiments.data');
+Route::get('/admin-dashboard', [WaterSentimentController::class, 'index'])->name('admin.dashboard');
 
 require __DIR__.'/auth.php';
