@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\AdminLoginController;
 use App\Http\Controllers\Auth\CustomerLoginController;
 use App\Http\Controllers\Auth\CustomerLogoutController;
 use App\Http\Controllers\WaterSentimentController;
+use App\Http\Controllers\AdminDashboardController; // Add this line
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -26,11 +27,19 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 // Admin Login Routes
-Route::get('/admin/login', function () {
-    return view('auth.admin-login');
-})->name('admin.login');
-
+Route::get('/admin/login', [AdminLoginController::class, 'showLoginForm'])->name('admin.login');
 Route::post('/admin/login', [AdminLoginController::class, 'login'])->name('admin.login.submit');
+
+// Admin Dashboard Route
+Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->middleware(['auth:admin', 'role:admin'])->name('admin.dashboard');
+
+// Admin Logout Route
+Route::post('/admin/logout', function (Request $request) {
+    Auth::guard('admin')->logout();
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
+    return redirect('/admin/login');
+})->middleware('auth:admin')->name('admin.logout');
 
 // Customer Login Routes
 Route::get('/customer/login', function () {
@@ -47,26 +56,9 @@ Route::get('/customer/dashboard', function () {
 // Customer Logout Route
 Route::post('/customer/logout', [CustomerLogoutController::class, 'logout'])->name('customer.logout');
 
-// Admin Login Routes
-Route::get('/admin/login', [AdminLoginController::class, 'showLoginForm'])->name('admin.login');
-Route::post('/admin/login', [AdminLoginController::class, 'login'])->name('admin.login.submit');
-
-// Admin Dashboard Route
-Route::get('/admin/dashboard', function () {
-    return view('admin-dashboard');
-})->middleware(['auth:admin', 'role:admin'])->name('admin.dashboard');
-
-// Admin Logout Route
-Route::post('/admin/logout', function (Request $request) {
-    Auth::guard('admin')->logout();
-    $request->session()->invalidate();
-    $request->session()->regenerateToken();
-    return redirect('/');
-})->middleware('auth:admin')->name('admin.logout');
-
 // Profile Routes (Authenticated)
 Route::middleware('auth')->group(function () {
-    Route::get('/profile/edit', [ProfileController::class, 'edit'])->middleware('auth')->name('profile.edit');
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
@@ -91,6 +83,5 @@ Route::post('/water_sentiments/{id}', [WaterSentimentController::class, 'update'
 Route::delete('/water_sentiments/{id}', [WaterSentimentController::class, 'destroy'])->name('water_sentiments.destroy');
 Route::get('/search', [WaterSentimentController::class, 'search'])->name('search');
 Route::get('/water_sentiments/data', [WaterSentimentController::class, 'dataTable'])->name('water_sentiments.data');
-Route::get('/admin-dashboard', [WaterSentimentController::class, 'index'])->name('admin.dashboard');
 
 require __DIR__.'/auth.php';
