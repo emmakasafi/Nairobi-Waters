@@ -18,7 +18,6 @@ class WaterSentiment extends Model
             'overall_sentiment' => $this->overall_sentiment,
             'complaint_category' => $this->complaint_category,
             'source' => $this->source,
-            'county' => $this->county,
             'subcounty' => $this->subcounty,
             'ward' => $this->ward,
         ];

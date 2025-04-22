@@ -63,7 +63,6 @@
                     <th class="px-4 py-2">Overall Sentiment</th>
                     <th class="px-4 py-2">Complaint Category</th>
                     <th class="px-4 py-2">Source</th>
-                    <th class="px-4 py-2">County</th>
                     <th class="px-4 py-2">Subcounty</th>
                     <th class="px-4 py-2">Ward</th>
                     <th class="px-4 py-2">Actions</th>
@@ -79,7 +78,6 @@
                         <td class="px-4 py-2">{{ $water_sentiment->overall_sentiment }}</td>
                         <td class="px-4 py-2">{{ $water_sentiment->complaint_category }}</td>
                         <td class="px-4 py-2">{{ $water_sentiment->source }}</td>
-                        <td class="px-4 py-2">{{ $water_sentiment->county }}</td>
                         <td class="px-4 py-2">{{ $water_sentiment->subcounty }}</td>
                         <td class="px-4 py-2">{{ $water_sentiment->ward }}</td>
                         <td class="px-4 py-2 whitespace-nowrap">
