@@ -7,7 +7,8 @@ use App\Http\Controllers\Auth\AdminLoginController;
 use App\Http\Controllers\Auth\CustomerLoginController;
 use App\Http\Controllers\Auth\CustomerLogoutController;
 use App\Http\Controllers\WaterSentimentController;
-use App\Http\Controllers\AdminDashboardController; // Add this line
+use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\NairobiLocationController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -83,5 +84,10 @@ Route::post('/water_sentiments/{id}', [WaterSentimentController::class, 'update'
 Route::delete('/water_sentiments/{id}', [WaterSentimentController::class, 'destroy'])->name('water_sentiments.destroy');
 Route::get('/search', [WaterSentimentController::class, 'search'])->name('search');
 Route::get('/water_sentiments/data', [WaterSentimentController::class, 'dataTable'])->name('water_sentiments.data');
+
+// Nairobi Location Routes
+Route::get('/get-subcounties', [NairobiLocationController::class, 'getSubcounties']);
+Route::get('/get-wards/{subcounty}', [NairobiLocationController::class, 'getWards']);
+
 
 require __DIR__.'/auth.php';

@@ -64,17 +64,12 @@
 
             <label for="subcounty">Subcounty:</label>
             <select id="subcounty" name="subcounty" required>
-                <option value="">Select Subcounty</option>
-                <option value="Westlands">Westlands</option>
-                <option value="Kibra">Kibra</option>
-                <option value="Starehe">Starehe</option>
-                <!-- Add more subcounties as needed -->
+                <option value="">Loading subcounties...</option>
             </select>
 
             <label for="ward">Ward:</label>
             <select id="ward" name="ward" required>
                 <option value="">Select Ward</option>
-                <!-- Options will be populated dynamically -->
             </select>
 
             <label for="complaint">Complaint:</label>
@@ -117,49 +112,60 @@
     </div>
 
     <script>
-        document.getElementById('complaintForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-
-            const formData = new FormData(event.target);
-            const data = Object.fromEntries(formData);
-
-            fetch('http://localhost:5001/submit-complaint', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            })
+    // Load subcounties on page load
+    window.addEventListener('DOMContentLoaded', () => {
+        fetch('/get-subcounties')
             .then(response => response.json())
             .then(data => {
-                if (data.error) {
-                    alert(data.error);
+                console.log('Subcounties:', data); // Log subcounty data
+                const subcountySelect = document.getElementById('subcounty');
+                subcountySelect.innerHTML = '<option value="">Select Subcounty</option>';
+                if (data.length > 0) {
+                    data.forEach(subcounty => {
+                        const option = document.createElement('option');
+                        option.value = subcounty.subcounty;
+                        option.textContent = subcounty.subcounty;
+                        subcountySelect.appendChild(option);
+                    });
                 } else {
-                    alert(data.message);
+                    subcountySelect.innerHTML = '<option value="">No subcounties found</option>';
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
+                console.error('Error loading subcounties:', error);
             });
-        });
+    });
 
-        // Example function to dynamically update wards based on subcounty selection
-        document.getElementById('subcounty').addEventListener('change', function() {
-            const subcounty = this.value;
-            const wards = {
-                'Westlands': ['Kilimani', 'Karen', 'Langata'],
-                'Kibra': ['Kibra', 'Laini Saba', 'Makadara'],
-                'Starehe': ['Ngara', 'Parklands', 'Highridge']
-            };
-            const wardSelect = document.getElementById('ward');
-            wardSelect.innerHTML = '<option value="">Select Ward</option>';
-            wards[subcounty].forEach(ward => {
-                const option = document.createElement('option');
-                option.value = ward;
-                option.textContent = ward;
-                wardSelect.appendChild(option);
-            });
-        });
-    </script>
+    // Load wards based on selected subcounty
+    document.getElementById('subcounty').addEventListener('change', function () {
+        const selectedSubcounty = this.value;
+        const wardSelect = document.getElementById('ward');
+        wardSelect.innerHTML = '<option value="">Loading wards...</option>';
+
+        if (selectedSubcounty) {
+            fetch(`/get-wards/${encodeURIComponent(selectedSubcounty)}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Wards for selected subcounty:', data); // Log ward data
+                    wardSelect.innerHTML = '<option value="">Select Ward</option>';
+                    if (data.length > 0) {
+                        data.forEach(ward => {
+                            const option = document.createElement('option');
+                            option.value = ward;
+                            option.textContent = ward;
+                            wardSelect.appendChild(option);
+                        });
+                    } else {
+                        wardSelect.innerHTML = '<option value="">No wards found</option>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading wards:', error);
+                    wardSelect.innerHTML = '<option value="">Failed to load wards</option>';
+                });
+        }
+    });
+</script>
+
 </body>
 </html>
