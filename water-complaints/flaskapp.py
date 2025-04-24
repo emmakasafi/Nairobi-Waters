@@ -28,11 +28,12 @@ app = Flask(__name__)
 CORS(app)
 
 # Database configuration
-DATABASE_URI = 'postgresql://username:password@localhost:5432/database_name'  # Replace with your actual database URI
+DATABASE_URI = 'postgresql://postgres:Emma321.Postgresql@localhost:5432/water_complaints'
 engine = create_engine(DATABASE_URI)
 Base = declarative_base()
 Session = sessionmaker(bind=engine)
 session = Session()
+
 
 # Define the WaterSentiment model
 class WaterSentiment(Base):
