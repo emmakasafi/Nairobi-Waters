@@ -70,6 +70,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/complaints', [ComplaintController::class, 'index'])->name('complaints.index');
     Route::get('/complaints/create', [ComplaintController::class, 'create'])->name('complaints.create');
     Route::post('/complaints', [ComplaintController::class, 'store'])->name('complaints.store');
+    Route::post('/complaints', [ComplaintController::class, 'store'])->name('complaints.store');
 });
 
 // Registration Routes
@@ -88,6 +89,8 @@ Route::get('/water_sentiments/data', [WaterSentimentController::class, 'dataTabl
 // Nairobi Location Routes
 Route::get('/get-subcounties', [NairobiLocationController::class, 'getSubcounties']);
 Route::get('/get-wards/{subcounty}', [NairobiLocationController::class, 'getWards']);
+
+
 
 
 require __DIR__.'/auth.php';

@@ -189,7 +189,7 @@
                     <div class="card-body">
                         <h5 class="card-title">Total Complaints</h5>
                         <h1>{{ $totalComplaints }}</h1>
-                        <a href="{{ route('complaints.index') }}" class="btn btn-primary">View All Complaints</a>
+                        <a href="{{ route('water_sentiments') }}" class="btn btn-primary">View All Complaints</a>
                     </div>
                 </div>
             </div>

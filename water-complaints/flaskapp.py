@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS  
+from flask_cors import CORS
 from transformers import RobertaForSequenceClassification, RobertaTokenizer, pipeline
 import torch
 import re
@@ -8,6 +8,10 @@ import logging
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
+from sqlalchemy import create_engine, Column, String, DateTime, Integer
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from datetime import datetime
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -22,6 +26,36 @@ nltk.download("wordnet")
 
 app = Flask(__name__)
 CORS(app)
+
+# Database configuration
+DATABASE_URI = 'postgresql://username:password@localhost:5432/database_name'  # Replace with your actual database URI
+engine = create_engine(DATABASE_URI)
+Base = declarative_base()
+Session = sessionmaker(bind=engine)
+session = Session()
+
+# Define the WaterSentiment model
+class WaterSentiment(Base):
+    __tablename__ = 'water_sentiments'
+    id = Column(Integer, primary_key=True)
+    original_caption = Column(String)
+    processed_caption = Column(String)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    overall_sentiment = Column(String)
+    complaint_category = Column(String)
+    source = Column(String)
+    subcounty = Column(String)
+    ward = Column(String)
+    user_id = Column(Integer)
+    user_name = Column(String)
+    user_email = Column(String)
+    user_phone = Column(String)
+    status = Column(String)
+    entity_type = Column(String)
+    entity_name = Column(String)
+
+# Create the table
+Base.metadata.create_all(engine)
 
 # Load Sentiment Model 
 MODEL_PATH = r"C:\Users\emmah\Downloads\roberta_model-20250213T114406Z-001\roberta_model"
@@ -55,7 +89,6 @@ def preprocess_text(text):
     words = [lemmatizer.lemmatize(word) for word in words]
     return " ".join(words)
 
-
 def analyze_complaint(original_text):
     """
     Analyzes complaint sentiment and classifies category.
@@ -84,14 +117,41 @@ def analyze_complaint(original_text):
 @app.route("/analyze", methods=["POST"])
 def analyze():
     """ API endpoint to analyze complaints. """
-    data = request.json
-    complaint_text = data.get("complaint", "").strip()
+    try:
+        data = request.json
+        complaint_text = data.get("complaint", "").strip()
+        logging.info(f"Received complaint text: {complaint_text}")
 
-    if not complaint_text:
-        return jsonify({"error": "No complaint text provided"}), 400
+        if not complaint_text:
+            logging.error("No complaint text provided")
+            return jsonify({"error": "No complaint text provided"}), 400
 
-    result = analyze_complaint(complaint_text)
-    return jsonify(result) 
+        result = analyze_complaint(complaint_text)
+
+        # Create a new WaterSentiment record
+        new_record = WaterSentiment(
+            original_caption=result["original_caption"],
+            processed_caption=result["processed_caption"],
+            overall_sentiment=result["sentiment"],
+            complaint_category=result["category"],
+            source="web_form",  # Assuming the source is a web form
+            subcounty=data.get("subcounty", ""),
+            ward=data.get("ward", ""),
+            user_id=data.get("user_id", 0),
+            user_name=data.get("full_name", ""),
+            user_email=data.get("user_email", ""),
+            user_phone=data.get("user_phone", ""),
+            status="pending",  # Assuming the status is pending initially
+            entity_type=data.get("entity_type", ""),
+            entity_name=data.get("entity_name", "")
+        )
+        session.add(new_record)
+        session.commit()
+
+        return jsonify(result)
+    except Exception as e:
+        logging.error(f"Error analyzing complaint: {e}")
+        return jsonify({"error": "Internal server error"}), 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001, debug=True)

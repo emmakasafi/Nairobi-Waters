@@ -14,13 +14,13 @@
             align-items: center;
             gap: 0.5rem;
             font-size: 0.875rem;
-            color: #374151; /* Tailwind gray-700 */
+            color: #374151;
         }
 
         div.dataTables_length select {
             padding: 0.375rem 1rem;
             border-radius: 0.5rem;
-            border: 1px solid #d1d5db; /* Tailwind gray-300 */
+            border: 1px solid #d1d5db;
             background-color: white;
             font-size: 0.875rem;
         }
@@ -36,7 +36,7 @@
             padding: 0.375rem 0.75rem;
             margin: 0 2px;
             border-radius: 0.5rem;
-            background-color: #f3f4f6; /* Tailwind gray-100 */
+            background-color: #f3f4f6;
             border: 1px solid #d1d5db;
             font-size: 0.875rem;
         }
@@ -57,6 +57,10 @@
             <thead class="bg-gray-200 text-gray-700">
                 <tr>
                     <th class="px-4 py-2">ID</th>
+                    <th class="px-4 py-2">User ID</th>
+                    <th class="px-4 py-2">User Name</th>
+                    <th class="px-4 py-2">User Email</th>
+                    <th class="px-4 py-2">User Phone</th>
                     <th class="px-4 py-2">Original Caption</th>
                     <th class="px-4 py-2">Processed Caption</th>
                     <th class="px-4 py-2">Timestamp</th>
@@ -65,6 +69,9 @@
                     <th class="px-4 py-2">Source</th>
                     <th class="px-4 py-2">Subcounty</th>
                     <th class="px-4 py-2">Ward</th>
+                    <th class="px-4 py-2">Status</th>
+                    <th class="px-4 py-2">Entity Type</th>
+                    <th class="px-4 py-2">Entity Name</th>
                     <th class="px-4 py-2">Actions</th>
                 </tr>
             </thead>
@@ -72,6 +79,10 @@
                 @foreach ($water_sentiments as $water_sentiment)
                     <tr>
                         <td class="px-4 py-2">{{ $water_sentiment->id }}</td>
+                        <td class="px-4 py-2">{{ $water_sentiment->user_id }}</td>
+                        <td class="px-4 py-2">{{ $water_sentiment->user_name }}</td>
+                        <td class="px-4 py-2">{{ $water_sentiment->user_email }}</td>
+                        <td class="px-4 py-2">{{ $water_sentiment->user_phone }}</td>
                         <td class="px-4 py-2">{{ $water_sentiment->original_caption }}</td>
                         <td class="px-4 py-2">{{ $water_sentiment->processed_caption }}</td>
                         <td class="px-4 py-2">{{ $water_sentiment->timestamp }}</td>
@@ -80,6 +91,9 @@
                         <td class="px-4 py-2">{{ $water_sentiment->source }}</td>
                         <td class="px-4 py-2">{{ $water_sentiment->subcounty }}</td>
                         <td class="px-4 py-2">{{ $water_sentiment->ward }}</td>
+                        <td class="px-4 py-2">{{ $water_sentiment->status }}</td>
+                        <td class="px-4 py-2">{{ $water_sentiment->entity_type }}</td>
+                        <td class="px-4 py-2">{{ $water_sentiment->entity_name }}</td>
                         <td class="px-4 py-2 whitespace-nowrap">
                             <div class="flex space-x-2">
                                 <a href="{{ route('water_sentiments.show', $water_sentiment->id) }}" class="px-3 py-1 bg-green-500 hover:bg-green-700 text-white rounded-lg text-sm">View</a>
@@ -105,7 +119,7 @@
     <script>
         $(document).ready(function () {
             $('#sentimentsTable').DataTable({
-                order: [[3, 'desc']],
+                order: [[7, 'desc']],
                 pageLength: 10,
                 responsive: true
             });

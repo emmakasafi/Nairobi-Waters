@@ -29,7 +29,7 @@ class WaterSentiment extends Model
         'status',
         'entity_type',
         'entity_name',
-        'media_links',
+        
     ];
 
     public function toSearchableArray()
@@ -49,7 +49,7 @@ class WaterSentiment extends Model
             'status' => $this->status,
             'entity_type' => $this->entity_type,
             'entity_name' => $this->entity_name,
-            'media_links' => $this->media_links,
+            
         ];
     }
 }
