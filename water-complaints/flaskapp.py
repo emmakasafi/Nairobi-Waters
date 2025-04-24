@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, g
 from flask_cors import CORS
 from transformers import RobertaForSequenceClassification, RobertaTokenizer, pipeline
 import torch
@@ -34,7 +34,6 @@ Base = declarative_base()
 Session = sessionmaker(bind=engine)
 session = Session()
 
-
 # Define the WaterSentiment model
 class WaterSentiment(Base):
     __tablename__ = 'water_sentiments'
@@ -55,7 +54,7 @@ class WaterSentiment(Base):
     entity_type = Column(String)
     entity_name = Column(String)
 
-# Create the table
+# Create the table if it doesn't exist
 Base.metadata.create_all(engine)
 
 # Load Sentiment Model 
@@ -71,7 +70,7 @@ except Exception as e:
 # Load Zero-Shot Classification Model
 zero_shot_classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
 
-# Complaint Categories 
+# Complaint Categories
 water_categories = [
     "Billing Issue", "Water Shortage", "Water Quality",
     "Leakage or Pipe Burst", "Sewerage Issue", "Meter Issues",
@@ -129,6 +128,11 @@ def analyze():
 
         result = analyze_complaint(complaint_text)
 
+        # Autofill user details (assuming you have a mechanism to get the logged-in user)
+        user_id = g.get('user_id', 0)  # If you use JWT or session to identify user
+        user_name = g.get('user_name', 'Unknown User')
+        user_email = g.get('user_email', 'unknown@example.com')
+
         # Create a new WaterSentiment record
         new_record = WaterSentiment(
             original_caption=result["original_caption"],
@@ -138,9 +142,9 @@ def analyze():
             source="web_form",  # Assuming the source is a web form
             subcounty=data.get("subcounty", ""),
             ward=data.get("ward", ""),
-            user_id=data.get("user_id", 0),
-            user_name=data.get("full_name", ""),
-            user_email=data.get("user_email", ""),
+            user_id=user_id,
+            user_name=user_name,
+            user_email=user_email,
             user_phone=data.get("user_phone", ""),
             status="pending",  # Assuming the status is pending initially
             entity_type=data.get("entity_type", ""),
