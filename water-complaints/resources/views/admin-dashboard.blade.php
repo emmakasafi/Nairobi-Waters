@@ -134,11 +134,12 @@
     <div class="sidebar">
         <h2>Admin Panel</h2>
         <ul>
-            <li><a href="#" class="{{ request()->is('dashboard') ? 'active' : '' }}">Dashboard</a></li>
-            <li><a href="#" class="{{ request()->is('users') ? 'active' : '' }}">Users</a></li>
-            <li><a href="#" class="{{ request()->is('complaints') ? 'active' : '' }}">Complaints</a></li>
-            <li><a href="#" class="{{ request()->is('reports') ? 'active' : '' }}">Reports</a></li>
-            <li><a href="#" class="{{ request()->is('settings') ? 'active' : '' }}">Settings</a></li>
+            <li><a href="{{ route('dashboard') }}" class="{{ request()->is('dashboard') ? 'active' : '' }}">Dashboard</a></li>
+            <li><a href="{{ request()->is('users*') ? 'active' : '' }}">Users</a></li>
+            <li><a href="{{ request()->is('complaints*') ? 'active' : '' }}">Complaints</a></li>
+            <li><a href="{{ request()->is('reports*') ? 'active' : '' }}">Reports</a></li>
+            <li><a href="{{ request()->is('settings*') ? 'active' : '' }}">Settings</a></li>
+            <li><a href="{{ route('departments.index') }}" class="{{ request()->is('departments*') ? 'active' : '' }}">Departments</a></li>
         </ul>
     </div>
     <div class="content">

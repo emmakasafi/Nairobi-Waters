@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\CustomerLogoutController;
 use App\Http\Controllers\WaterSentimentController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\NairobiLocationController;
+use App\Http\Controllers\DepartmentController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -90,7 +91,10 @@ Route::get('/water_sentiments/data', [WaterSentimentController::class, 'dataTabl
 Route::get('/get-subcounties', [NairobiLocationController::class, 'getSubcounties']);
 Route::get('/get-wards/{subcounty}', [NairobiLocationController::class, 'getWards']);
 
+Route::resource('departments', DepartmentController::class);
+
 
 
 
 require __DIR__.'/auth.php';
+Route::resource('departments', App\Http\Controllers\DepartmentController::class);
