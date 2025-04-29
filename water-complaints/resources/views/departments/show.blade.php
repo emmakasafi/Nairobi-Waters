@@ -1,4 +1,11 @@
-@extends('layouts.app')
+@extends('adminlte::page')
+
+@section('title', 'Department Details')
+
+@section('content_header')
+    <h1>Department Details</h1>
+@endsection
+
 
 @section('content')
     <section class="content-header">
