@@ -11,7 +11,7 @@ from nltk.stem import WordNetLemmatizer
 from sqlalchemy import create_engine, Column, String, DateTime, Integer
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -40,7 +40,7 @@ class WaterSentiment(Base):
     id = Column(Integer, primary_key=True)
     original_caption = Column(String)
     processed_caption = Column(String)
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    timestamp = Column(DateTime, default=datetime.now(timezone.utc))
     overall_sentiment = Column(String)
     complaint_category = Column(String)
     source = Column(String)
@@ -79,7 +79,7 @@ water_categories = [
 
 # Text Preprocessing Function
 def preprocess_text(text):
-    """ Cleans and preprocesses complaint text. """
+    """" Cleans and preprocesses complaint text. """
     text = text.lower()
     text = re.sub(r"[^\w\s']", "", text)  
     words = word_tokenize(text)
@@ -114,6 +114,19 @@ def analyze_complaint(original_text):
         "category": predicted_category
     }
 
+# Function to reset the auto-increment sequence
+def reset_sequence():
+    try:
+        # Get the current session's connection and execute the query
+        with engine.connect() as connection:
+            connection.execute("""
+                SELECT setval(pg_get_serial_sequence('water_sentiments', 'id'), 
+                (SELECT MAX(id) FROM water_sentiments));
+            """)
+            connection.commit()
+    except Exception as e:
+        logging.error(f"Error resetting sequence: {e}")
+
 @app.route("/analyze", methods=["POST"])
 def analyze():
     """ API endpoint to analyze complaints. """
@@ -128,15 +141,17 @@ def analyze():
 
         result = analyze_complaint(complaint_text)
 
-        # Autofill user details (assuming you have a mechanism to get the logged-in user)
-        user_id = g.get('user_id', 0)  # If you use JWT or session to identify user
-        user_name = g.get('user_name', 'Unknown User')
-        user_email = g.get('user_email', 'unknown@example.com')
+        # Retrieve user details from the session or authentication context
+        user_id = data.get('user_id', "")  
+        user_name = data.get('user_name', "") 
+        user_email = data.get('user_email', "")  
+        user_phone = data.get("user_phone", "")  # Get user_phone from the request
 
-        # Create a new WaterSentiment record
+        # Create a new WaterSentiment record (no need to specify 'id')
         new_record = WaterSentiment(
             original_caption=result["original_caption"],
             processed_caption=result["processed_caption"],
+            timestamp=datetime.now(timezone.utc),  # Use timezone-aware UTC timestamp
             overall_sentiment=result["sentiment"],
             complaint_category=result["category"],
             source="web_form",  # Assuming the source is a web form
@@ -145,13 +160,16 @@ def analyze():
             user_id=user_id,
             user_name=user_name,
             user_email=user_email,
-            user_phone=data.get("user_phone", ""),
+            user_phone=user_phone,
             status="pending",  # Assuming the status is pending initially
             entity_type=data.get("entity_type", ""),
             entity_name=data.get("entity_name", "")
         )
         session.add(new_record)
         session.commit()
+
+        # Reset the sequence after inserting a record
+        reset_sequence()
 
         return jsonify(result)
     except Exception as e:

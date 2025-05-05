@@ -55,34 +55,47 @@ class DepartmentController extends AppBaseController
     /**
      * Display the specified Department.
      */
-    public function show($id)
-    {
-        $department = $this->departmentRepository->find($id);
+    /**
+ * Display the specified Department.
+ */
+public function show($id)
+{
+    $department = $this->departmentRepository->find($id);
 
-        if (empty($department)) {
-            Flash::error('Department not found');
-
-            return redirect(route('departments.index'));
-        }
-
-        return view('departments.show')->with('department', $department);
+    if (empty($department)) {
+        Flash::error('Department not found');
+        return redirect(route('departments.index'));
     }
+
+    // Retrieve all users for the department
+    $users = $department->users;
+
+    return view('departments.show', [
+        'department' => $department,
+        'users' => $users
+    ]);
+}
 
     /**
      * Show the form for editing the specified Department.
      */
     public function edit($id)
-    {
-        $department = $this->departmentRepository->find($id);
+{
+    $department = $this->departmentRepository->find($id);
 
-        if (empty($department)) {
-            Flash::error('Department not found');
-
-            return redirect(route('departments.index'));
-        }
-
-        return view('departments.edit')->with('department', $department);
+    if (empty($department)) {
+        Flash::error('Department not found');
+        return redirect(route('departments.index'));
     }
+
+    // Retrieve all users for the department
+    $users = $department->users;
+
+    return view('departments.edit', [
+        'department' => $department,
+        'users' => $users
+    ]);
+}
 
     /**
      * Update the specified Department in storage.

@@ -1,41 +1,24 @@
-@extends('layouts.app')
+@extends('adminlte::page')
+
+@section('title', 'Create Department')
+
+@section('content_header')
+    <h1>Create Department</h1>
+@stop
 
 @section('content')
-    <section class="content-header">
-        <div class="container-fluid">
-            <div class="row mb-2">
-                <div class="col-sm-12">
-                    <h1>
-                    Create Departments
-                    </h1>
-                </div>
-            </div>
+    <form action="{{ route('departments.store') }}" method="POST">
+        @csrf
+        <div class="form-group">
+            <label for="name">Department Name</label>
+            <input type="text" name="name" class="form-control" required>
         </div>
-    </section>
 
-    <div class="content px-3">
-
-        @include('adminlte-templates::common.errors')
-
-        <div class="card">
-
-            {!! Form::open(['route' => 'departments.store']) !!}
-
-            <div class="card-body">
-
-                <div class="row">
-                    @include('departments.fields')
-                </div>
-
-            </div>
-
-            <div class="card-footer">
-                {!! Form::submit('Save', ['class' => 'btn btn-primary']) !!}
-                <a href="{{ route('departments.index') }}" class="btn btn-default"> Cancel </a>
-            </div>
-
-            {!! Form::close() !!}
-
+        <div class="form-group">
+            <label for="description">Description (optional)</label>
+            <textarea name="description" class="form-control"></textarea>
         </div>
-    </div>
-@endsection
+
+        <button type="submit" class="btn btn-primary">Save</button>
+    </form>
+@stop

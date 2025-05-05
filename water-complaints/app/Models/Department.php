@@ -20,5 +20,11 @@ class Department extends Model
         'name' => 'required | max:255'
     ];
 
+    public function users()
+{
+    return $this->hasMany(User::class);
+}
+
+
     
 }

@@ -10,6 +10,8 @@ use App\Http\Controllers\WaterSentimentController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\NairobiLocationController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Auth\RegisteredUserController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -75,8 +77,9 @@ Route::middleware('auth')->group(function () {
 });
 
 // Registration Routes
-Route::get('/register', [Auth\RegisterController::class, 'showRegistrationForm'])->name('register');
-Route::post('/register', [Auth\RegisterController::class, 'register'])->name('register.submit');
+Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
+Route::post('/register', [RegisteredUserController::class, 'store']);
+
 
 // Water Sentiment Routes
 Route::get('/water_sentiments', [WaterSentimentController::class, 'index'])->name('water_sentiments');
@@ -92,6 +95,15 @@ Route::get('/get-subcounties', [NairobiLocationController::class, 'getSubcountie
 Route::get('/get-wards/{subcounty}', [NairobiLocationController::class, 'getWards']);
 
 Route::resource('departments', DepartmentController::class);
+
+Route::middleware('auth')->prefix('admin')->group(function () {
+    Route::get('/users', [App\Http\Controllers\Admin\UserController::class, 'index'])->name('admin.users.index');
+    Route::get('/users/{id}/edit', [App\Http\Controllers\Admin\UserController::class, 'edit'])->name('admin.users.edit');
+    Route::put('/users/{id}', [App\Http\Controllers\Admin\UserController::class, 'update'])->name('admin.users.update');
+    Route::get('/users/{id}', [App\Http\Controllers\Admin\UserController::class, 'show'])->name('admin.users.show');
+    Route::delete('/users/{id}', [App\Http\Controllers\Admin\UserController::class, 'destroy'])->name('admin.users.destroy');
+
+});
 
 
 
