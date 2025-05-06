@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nairobi Waters Login</title>
+    <title>HOD Login</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         body {
@@ -74,8 +74,8 @@
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
     <div class="login-container">
         <div class="login-form">
-            <h1 class="login-title">Nairobi Waters</h1>
-            <p class="login-subtitle">Welcome to Nairobi Waters. Please log in to continue.</p>
+            <h1 class="login-title">HOD Login</h1>
+            <p class="login-subtitle">Please log in as HOD to continue.</p>
             <form method="POST" action="{{ route('login') }}">
                 @csrf
                 <div class="form-group">
@@ -93,28 +93,7 @@
                     @enderror
                 </div>
                 <div class="form-group">
-                        <label for="user_type">User Type</label>
-                        <select id="user_type" name="user_type" class="w-full border border-gray-300 rounded p-2" required>
-                        <option value="customer">Customer</option>
-                        <option value="admin">Admin</option>
-                        <option value="hod">HOD</option>
-                        <option value="officer">Officer</option>
-                        </select>
-                    </div>
-
-                <div class="form-group">
-                    <label for="remember_me" class="inline-flex items-center">
-                        <input id="remember_me" type="checkbox" class="rounded dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:focus:ring-offset-gray-800" name="remember">
-                        <span class="ms-2 text-sm text-gray-600 dark:text-gray-400">Remember me</span>
-                    </label>
-                </div>
-                <div class="form-group">
                     <input type="submit" value="Log in" class="w-full py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600">
-                </div>
-                <div class="form-group">
-                    @if (Route::has('password.request'))
-                        <a href="{{ route('password.request') }}">Forgot your password?</a>
-                    @endif
                 </div>
             </form>
         </div>

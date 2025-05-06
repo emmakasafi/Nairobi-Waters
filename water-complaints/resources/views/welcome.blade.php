@@ -113,7 +113,10 @@
         <div class="bg-white p-8 rounded shadow-md w-96">
             <h2 class="text-2xl font-semibold mb-6">Login Options</h2>
             <a href="{{ route('admin.login') }}" class="button block mb-4">Login as Admin</a>
+            <a href="{{ route('hod.login') }}" class="button block mb-4">Login as HOD</a>
+            <a href="{{ route('officer.login') }}" class="button block mb-4">Login as Officer</a>
             <a href="{{ route('customer.login') }}" class="button block">Login as Customer</a>
+
         </div>
     </div>
 

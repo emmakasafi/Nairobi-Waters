@@ -29,27 +29,42 @@ class WaterSentiment extends Model
         'status',
         'entity_type',
         'entity_name',
-        
+        'assigned_to',
     ];
 
     public function toSearchableArray()
     {
         return [
-            'original_caption' => $this->original_caption,
-            'processed_caption' => $this->processed_caption,
-            'timestamp' => $this->timestamp->toDateTimeString(),
-            'overall_sentiment' => $this->overall_sentiment,
-            'complaint_category' => $this->complaint_category,
-            'source' => $this->source,
-            'subcounty' => $this->subcounty,
-            'ward' => $this->ward,
-            'user_name' => $this->user_name,
-            'user_email' => $this->user_email,
-            'user_phone' => $this->user_phone,
-            'status' => $this->status,
-            'entity_type' => $this->entity_type,
-            'entity_name' => $this->entity_name,
-            
+            'original_caption'     => $this->original_caption,
+            'processed_caption'    => $this->processed_caption,
+            'timestamp'            => $this->timestamp->toDateTimeString(),
+            'overall_sentiment'    => $this->overall_sentiment,
+            'complaint_category'   => $this->complaint_category,
+            'source'               => $this->source,
+            'subcounty'            => $this->subcounty,
+            'ward'                 => $this->ward,
+            'user_name'            => $this->user_name,
+            'user_email'           => $this->user_email,
+            'user_phone'           => $this->user_phone,
+            'status'               => $this->status,
+            'entity_type'          => $this->entity_type,
+            'entity_name'          => $this->entity_name,
         ];
+    }
+
+    /**
+     * The officer assigned to handle this complaint.
+     */
+    public function assignedOfficer()
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    /**
+     * The user (customer) who submitted the complaint.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

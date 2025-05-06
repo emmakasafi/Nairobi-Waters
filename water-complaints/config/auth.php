@@ -50,6 +50,14 @@ return [
             'driver' => 'session',
             'provider' => 'users', // Reuse the 'users' provider
         ],
+        'hod' => [
+            'driver' => 'session',
+            'provider' => 'users',
+        ],
+        'officer' => [
+        'driver' => 'session',
+        'provider' => 'officers',
+    ],
     ],
 
     /*

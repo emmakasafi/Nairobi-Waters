@@ -6,10 +6,15 @@ use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\Auth\AdminLoginController;
 use App\Http\Controllers\Auth\CustomerLoginController;
 use App\Http\Controllers\Auth\CustomerLogoutController;
+use App\Http\Controllers\Auth\OfficerLoginController;
+use App\Http\Controllers\Auth\HodLoginController;
 use App\Http\Controllers\WaterSentimentController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\NairobiLocationController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\HODController;
+use App\Http\Controllers\OfficerController;
+use App\Http\Controllers\SMSController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use Illuminate\Support\Facades\Auth;
@@ -60,6 +65,16 @@ Route::get('/customer/dashboard', function () {
 // Customer Logout Route
 Route::post('/customer/logout', [CustomerLogoutController::class, 'logout'])->name('customer.logout');
 
+
+Route::prefix('officer')->name('officer.')->group(function () {
+    Route::get('login', [OfficerLoginController::class, 'showLoginForm'])->name('login');
+    Route::post('login', [OfficerLoginController::class, 'login']);
+});
+
+Route::prefix('hod')->name('hod.')->group(function () {
+    Route::get('login', [HodLoginController::class, 'showLoginForm'])->name('login');
+    Route::post('login', [HodLoginController::class, 'login']);
+});
 // Profile Routes (Authenticated)
 Route::middleware('auth')->group(function () {
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -103,10 +118,29 @@ Route::middleware('auth')->prefix('admin')->group(function () {
     Route::get('/users/{id}', [App\Http\Controllers\Admin\UserController::class, 'show'])->name('admin.users.show');
     Route::delete('/users/{id}', [App\Http\Controllers\Admin\UserController::class, 'destroy'])->name('admin.users.destroy');
 
+    Route::post('/receive-sms', [SMSController::class, 'receive']);
+
+
+    // For HOD
+Route::middleware(['auth', 'role:hod'])->group(function () {
+    Route::resource('hod', HODController::class)->names([
+        'index' => 'hod.dashboard'
+    ]);
+    Route::post('/hod/assign/{complaint}', [HODController::class, 'assign'])->name('hod.assign');
+    Route::post('/hod/complaints/{complaint}/assign', [HodComplaintController::class, 'assign'])->name('hod.complaints.assign');
+
 });
 
+// For Officer
+Route::middleware(['auth', 'role:officer'])->group(function () {
+    Route::resource('officer', OfficerController::class)->names([
+        'index' => 'officer.dashboard'
+    ]);
+    Route::post('/officer/update-status/{complaint}', [OfficerController::class, 'updateStatus'])->name('officer.updateStatus');
+});
 
+});
 
+Route::resource('departments', App\Http\Controllers\DepartmentController::class);
 
 require __DIR__.'/auth.php';
-Route::resource('departments', App\Http\Controllers\DepartmentController::class);
