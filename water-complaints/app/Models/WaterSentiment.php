@@ -30,6 +30,7 @@ class WaterSentiment extends Model
         'entity_type',
         'entity_name',
         'assigned_to',
+        'department_id', // if you're associating this with a department
     ];
 
     public function toSearchableArray()
@@ -37,7 +38,7 @@ class WaterSentiment extends Model
         return [
             'original_caption'     => $this->original_caption,
             'processed_caption'    => $this->processed_caption,
-            'timestamp'            => $this->timestamp->toDateTimeString(),
+            'timestamp'            => optional($this->timestamp)->toDateTimeString(),
             'overall_sentiment'    => $this->overall_sentiment,
             'complaint_category'   => $this->complaint_category,
             'source'               => $this->source,
@@ -53,7 +54,7 @@ class WaterSentiment extends Model
     }
 
     /**
-     * The officer assigned to handle this complaint.
+     * The officer assigned to this complaint.
      */
     public function assignedOfficer()
     {
@@ -61,10 +62,18 @@ class WaterSentiment extends Model
     }
 
     /**
-     * The user (customer) who submitted the complaint.
+     * The customer who submitted the complaint.
      */
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * Optional: Department this complaint belongs to.
+     */
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
     }
 }

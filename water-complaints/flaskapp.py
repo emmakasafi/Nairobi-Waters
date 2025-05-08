@@ -72,9 +72,18 @@ zero_shot_classifier = pipeline("zero-shot-classification", model="facebook/bart
 
 # Complaint Categories
 water_categories = [
-    "Billing Issue", "Water Shortage", "Water Quality",
-    "Leakage or Pipe Burst", "Sewerage Issue", "Meter Issues",
-    "Customer Service", "Other"
+    
+    "Billing and Payments",
+    "Water Supply and Distribution",
+    "Water Quality and Testing",
+    "Pipe Leaks and Maintenance",
+    "Sewage and Sanitation",
+    "Metering Services",
+    "Customer Support and Engagement",
+    "Infrastructure and Projects",
+    "Environmental and Conservation",
+    "ICT and System Access"
+
 ]
 
 # Text Preprocessing Function

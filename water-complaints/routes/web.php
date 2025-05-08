@@ -71,11 +71,7 @@ Route::prefix('officer')->name('officer.')->group(function () {
     Route::post('login', [OfficerLoginController::class, 'login']);
 });
 
-// HOD Login Routes
-Route::prefix('hod')->name('hod.')->group(function () {
-    Route::get('login', [HodLoginController::class, 'showLoginForm'])->name('login');
-    Route::post('login', [HodLoginController::class, 'login']);
-});
+
 
 // Profile Routes (Authenticated)
 Route::middleware('auth')->group(function () {
@@ -121,14 +117,23 @@ Route::middleware('auth')->prefix('admin')->group(function () {
     Route::post('/receive-sms', [SMSController::class, 'receive']);
 });
 
-Route::middleware(['auth:hod', 'role:hod'])->prefix('hod')->name('hod.')->group(function () {
-    Route::resource('dashboard', HODController::class)->names([
-        'index' => 'index'
-    ]);
-    Route::post('assign/{complaint}', [HODController::class, 'assign'])->name('assign');
+// Route group for authenticated HODs
+Route::middleware(['auth', 'is_hod'])->group(function () {
+    // Route to view the HOD dashboard (listing unassigned complaints)
+    Route::get('/hod', [HODController::class, 'index'])->name('hod.index');
+
+    // Route to assign a complaint to an officer
+    Route::post('/hod/assign/{complaintId}', [HODController::class, 'assign'])->name('hod.assign');
 });
 
+// Route to show the HOD login form
+Route::get('hod/login', [HodLoginController::class, 'showLoginForm'])->name('hod.loginForm');
 
+// Route to handle the HOD login request
+Route::post('hod/login', [HodLoginController::class, 'login'])->name('hod.login');
+
+// Route to handle the HOD logout
+Route::post('hod/logout', [HodLoginController::class, 'logout'])->name('hod.logout');
 
 
 // For Officer

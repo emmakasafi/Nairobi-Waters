@@ -48,6 +48,7 @@ class Kernel extends HttpKernel
         'role' => \App\Http\Middleware\EnsureRole::class, // Existing role middleware
         'admin' => \App\Http\Middleware\EnsureAdminRole::class, // Added admin middleware
         'customer' => \App\Http\Middleware\EnsureCustomerRole::class,
+        'is_hod' => \App\Http\Middleware\IsHod::class,
     
     ];
 
