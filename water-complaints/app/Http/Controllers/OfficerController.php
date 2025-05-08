@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Models\WaterSentiment; 
 
 use Illuminate\Http\Request;
 
@@ -11,7 +12,13 @@ class OfficerController extends Controller
      */
     public function index()
     {
-        //
+        // Fetch water sentiments assigned to the logged-in officer
+        $waterSentiments = WaterSentiment::where('assigned_to', auth()->id())  // Use 'Assigned_to' column here
+                                        ->orderBy('timestamp', 'desc')
+                                        ->get();
+
+        // Pass the waterSentiments to the view
+        return view('officer.index', compact('waterSentiments'));
     }
 
     /**

@@ -15,16 +15,18 @@ class OfficerLoginController extends Controller
     }
 
     public function login(Request $request)
-    {
-        $credentials = $request->only('email', 'password');
+{
+    $credentials = $request->only('email', 'password');
 
-        if (Auth::guard('officer')->attempt($credentials, $request->remember)) {
-            // Redirect to officer's dashboard
-            return redirect()->route('officer.index');
-        }
+    if (Auth::attempt($credentials, $request->filled('remember'))) {
+        // Redirect to officer dashboard
+        return redirect()->route('officer.index');
 
-        return back()->withErrors([
-            'email' => 'These credentials do not match our records.',
-        ]);
     }
+
+    return back()->withErrors([
+        'email' => 'The provided credentials do not match our records.',
+    ]);
+}
+
 }

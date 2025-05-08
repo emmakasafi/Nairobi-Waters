@@ -76,7 +76,7 @@
         <div class="login-form">
             <h1 class="login-title">Officer Login</h1>
             <p class="login-subtitle">Please log in as Officer to continue.</p>
-            <form method="POST" action="{{ route('login') }}">
+            <form method="POST" action="{{ route('officer.login') }}">
                 @csrf
                 <div class="form-group">
                     <label for="email">Email</label>
@@ -91,6 +91,12 @@
                     @error('password')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
+                </div>
+                <div class="form-group">
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" name="remember" class="form-checkbox text-blue-600">
+                        <span class="ml-2 text-gray-700">Remember me</span>
+                    </label>
                 </div>
                 <div class="form-group">
                     <input type="submit" value="Log in" class="w-full py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600">

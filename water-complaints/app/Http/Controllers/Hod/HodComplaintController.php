@@ -25,7 +25,7 @@ class HodComplaintController extends Controller
         $complaint->assigned_to = $request->officer_id;
         $complaint->save();
 
-        return redirect()->route('hod.dashboard')->with('success', 'Complaint assigned successfully.');
+        return redirect()->route('hod.index')->with('success', 'Complaint assigned successfully.');
     }
 }
 

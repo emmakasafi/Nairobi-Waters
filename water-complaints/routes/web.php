@@ -65,16 +65,18 @@ Route::get('/customer/dashboard', function () {
 // Customer Logout Route
 Route::post('/customer/logout', [CustomerLogoutController::class, 'logout'])->name('customer.logout');
 
-
+// Officer Login Routes
 Route::prefix('officer')->name('officer.')->group(function () {
     Route::get('login', [OfficerLoginController::class, 'showLoginForm'])->name('login');
     Route::post('login', [OfficerLoginController::class, 'login']);
 });
 
+// HOD Login Routes
 Route::prefix('hod')->name('hod.')->group(function () {
     Route::get('login', [HodLoginController::class, 'showLoginForm'])->name('login');
     Route::post('login', [HodLoginController::class, 'login']);
 });
+
 // Profile Routes (Authenticated)
 Route::middleware('auth')->group(function () {
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -88,13 +90,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/complaints', [ComplaintController::class, 'index'])->name('complaints.index');
     Route::get('/complaints/create', [ComplaintController::class, 'create'])->name('complaints.create');
     Route::post('/complaints', [ComplaintController::class, 'store'])->name('complaints.store');
-    Route::post('/complaints', [ComplaintController::class, 'store'])->name('complaints.store');
 });
 
 // Registration Routes
 Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
 Route::post('/register', [RegisteredUserController::class, 'store']);
-
 
 // Water Sentiment Routes
 Route::get('/water_sentiments', [WaterSentimentController::class, 'index'])->name('water_sentiments');
@@ -111,36 +111,34 @@ Route::get('/get-wards/{subcounty}', [NairobiLocationController::class, 'getWard
 
 Route::resource('departments', DepartmentController::class);
 
+// Admin Routes (Authenticated and Role-based)
 Route::middleware('auth')->prefix('admin')->group(function () {
-    Route::get('/users', [App\Http\Controllers\Admin\UserController::class, 'index'])->name('admin.users.index');
-    Route::get('/users/{id}/edit', [App\Http\Controllers\Admin\UserController::class, 'edit'])->name('admin.users.edit');
-    Route::put('/users/{id}', [App\Http\Controllers\Admin\UserController::class, 'update'])->name('admin.users.update');
-    Route::get('/users/{id}', [App\Http\Controllers\Admin\UserController::class, 'show'])->name('admin.users.show');
-    Route::delete('/users/{id}', [App\Http\Controllers\Admin\UserController::class, 'destroy'])->name('admin.users.destroy');
-
+    Route::get('/users', [UserController::class, 'index'])->name('admin.users.index');
+    Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('admin.users.edit');
+    Route::put('/users/{id}', [UserController::class, 'update'])->name('admin.users.update');
+    Route::get('/users/{id}', [UserController::class, 'show'])->name('admin.users.show');
+    Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('admin.users.destroy');
     Route::post('/receive-sms', [SMSController::class, 'receive']);
-
-
-    // For HOD
-Route::middleware(['auth', 'role:hod'])->group(function () {
-    Route::resource('hod', HODController::class)->names([
-        'index' => 'hod.dashboard'
-    ]);
-    Route::post('/hod/assign/{complaint}', [HODController::class, 'assign'])->name('hod.assign');
-    Route::post('/hod/complaints/{complaint}/assign', [HodComplaintController::class, 'assign'])->name('hod.complaints.assign');
-
 });
 
+Route::middleware(['auth:hod', 'role:hod'])->prefix('hod')->name('hod.')->group(function () {
+    Route::resource('dashboard', HODController::class)->names([
+        'index' => 'index'
+    ]);
+    Route::post('assign/{complaint}', [HODController::class, 'assign'])->name('assign');
+});
+
+
+
+
 // For Officer
-Route::middleware(['auth', 'role:officer'])->group(function () {
+Route::middleware(['auth', 'role:officer'])->prefix('officer')->name('officer.')->group(function () {
     Route::resource('officer', OfficerController::class)->names([
-        'index' => 'officer.dashboard'
+        'index' => 'index', // This ensures 'officer.index' points to the 'index' method
     ]);
     Route::post('/officer/update-status/{complaint}', [OfficerController::class, 'updateStatus'])->name('officer.updateStatus');
 });
 
-});
-
-Route::resource('departments', App\Http\Controllers\DepartmentController::class);
+Route::resource('departments', DepartmentController::class);
 
 require __DIR__.'/auth.php';

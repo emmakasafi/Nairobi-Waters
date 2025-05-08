@@ -56,7 +56,8 @@ return [
         ],
         'officer' => [
         'driver' => 'session',
-        'provider' => 'officers',
+        'provider' => 'users',
+    
     ],
     ],
 

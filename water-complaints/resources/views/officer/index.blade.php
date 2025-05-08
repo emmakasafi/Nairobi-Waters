@@ -3,7 +3,7 @@
 @section('title', 'Officer Dashboard')
 
 @section('content_header')
-    <h1>My Assigned Complaints</h1>
+    <h1>My Assigned Water Sentiments</h1>
 @stop
 
 @section('content')
@@ -22,13 +22,13 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($complaints as $complaint)
+            @foreach($waterSentiments as $waterSentiment)
                 <tr>
-                    <td>{{ $complaint->id }}</td>
-                    <td>{{ $complaint->user->name ?? 'Unknown' }}</td>
-                    <td>{{ $complaint->title }}</td>
-                    <td>{{ ucfirst($complaint->status) }}</td>
-                    <td><a href="{{ route('officer.show', $complaint->id) }}" class="btn btn-info btn-sm">View</a></td>
+                    <td>{{ $waterSentiment->id }}</td>
+                    <td>{{ $waterSentiment->user->name ?? 'Unknown' }}</td>
+                    <td>{{ $waterSentiment->title }}</td>
+                    <td>{{ ucfirst($waterSentiment->status) }}</td>
+                    <td><a href="{{ route('officer.show', $waterSentiment->id) }}" class="btn btn-info btn-sm">View</a></td>
                 </tr>
             @endforeach
         </tbody>
