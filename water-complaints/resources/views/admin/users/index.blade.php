@@ -2,14 +2,13 @@
 
 @section('title', 'All Users')
 
-@section('content_header')
-    <h1>All Users</h1>
-    <a href="{{ route('admin.users.create') }}" class="btn btn-primary float-right">Add New User</a>
-@stop
 
 @section('content')
 <div class="card">
     <div class="card-body">
+
+    <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary mb-3">← Back to Dashboard</a>
+
         <table class="table table-bordered table-striped">
             <thead>
                 <tr>

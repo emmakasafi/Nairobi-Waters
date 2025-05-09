@@ -20,10 +20,10 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
-// Home Route
 Route::get('/', function () {
     return view('welcome');
-});
+})->name('welcome');
+
 
 // Home Route (Authenticated)
 Route::get('/home', function () {

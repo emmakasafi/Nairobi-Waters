@@ -3,6 +3,17 @@
 @section('content')
     <h3>Assign Department to User</h3>
 
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    @endif
+
+    <a href="{{ route('admin.users.index') }}" class="btn btn-secondary mb-3">← Back to User List</a>
+
     <form action="{{ route('admin.users.update', $user->id) }}" method="POST">
         @csrf
         @method('PUT')

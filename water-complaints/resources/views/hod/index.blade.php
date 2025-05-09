@@ -1,9 +1,18 @@
 @extends('adminlte::page')
 
-@section('title', 'HOD Dashboard')
-
 @section('content_header')
-    <h1 class="mb-3">Unassigned Water Sentiments</h1>
+    <div class="text-center mb-4">
+        <h1 class="font-weight-bold">{{ $departmentName }} Department</h1>
+        <p class="text-muted font-weight-bold">HOD Dashboard</p>
+    </div>
+
+    <h2 class="mb-3">Unassigned Water Sentiments</h2>
+
+    @if(session('new_complaints'))
+        <div class="alert alert-warning">
+            You have <span class="badge badge-danger">{{ session('new_complaints') }}</span> new complaint(s) that need attention.
+        </div>
+    @endif
 @stop
 
 @section('content')
@@ -97,4 +106,41 @@
     @empty
         <div class="alert alert-info mt-3">No officers found in your department.</div>
     @endforelse
+@stop
+
+@section('adminlte::navbar')
+    <ul class="navbar-nav ml-auto">
+        <li class="nav-item dropdown">
+            <a class="nav-link" data-toggle="dropdown" href="#">
+                <i class="fas fa-bell"></i>
+                @if($unassignedComplaints->count() > 0)
+                    <span class="badge badge-warning navbar-badge">{{ $unassignedComplaints->count() }}</span>
+                @endif
+            </a>
+            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                <span class="dropdown-item dropdown-header">{{ $unassignedComplaints->count() }} New Complaints</span>
+                <div class="dropdown-divider"></div>
+                @foreach($unassignedComplaints as $complaint)
+                    <a href="#complaint-{{ $complaint->id }}" class="dropdown-item">
+                        <div class="media">
+                            <div class="media-body">
+                                <h3 class="dropdown-item-title">
+                                    {{ $complaint->entity_name ?? 'N/A' }}
+                                    <span class="float-right text-sm text-warning"><i class="fas fa-star"></i></span>
+                                </h3>
+                                <p class="text-sm">{{ Str::limit($complaint->processed_caption, 50) }}</p>
+                                <p class="text-sm text-muted">
+                                <i class="far fa-clock mr-1"></i>
+                                {{ $complaint->timestamp ? \Carbon\Carbon::parse($complaint->timestamp)->diffForHumans() : 'Unknown time' }}
+                            </p>
+
+                            </div>
+                        </div>
+                    </a>
+                    <div class="dropdown-divider"></div>
+                @endforeach
+                <a href="#unassigned-complaints" class="dropdown-item dropdown-footer">See All Complaints</a>
+            </div>
+        </li>
+    </ul>
 @stop
