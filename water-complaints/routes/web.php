@@ -100,6 +100,8 @@ Route::post('/water_sentiments/{id}', [WaterSentimentController::class, 'update'
 Route::delete('/water_sentiments/{id}', [WaterSentimentController::class, 'destroy'])->name('water_sentiments.destroy');
 Route::get('/search', [WaterSentimentController::class, 'search'])->name('search');
 Route::get('/water_sentiments/data', [WaterSentimentController::class, 'dataTable'])->name('water_sentiments.data');
+Route::post('/water-sentiments/{id}/assign', [WaterSentimentController::class, 'assign'])->name('water_sentiments.assign');
+
 
 // Nairobi Location Routes
 Route::get('/get-subcounties', [NairobiLocationController::class, 'getSubcounties']);

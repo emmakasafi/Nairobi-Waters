@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\WaterSentiment;
+use App\Models\User;
+use App\Models\Department;
 use Illuminate\Http\Request;
 use DataTables;
 
@@ -64,7 +66,10 @@ class WaterSentimentController extends Controller
     public function show($id)
     {
         $waterSentiment = WaterSentiment::findOrFail($id);
-        return view('admin.water_sentiments.show', compact('waterSentiment'));
+        $departments = Department::all();
+        $officers = User::where('role', 'officer')->get(); // Adjust 'officer' if you use other role names
+
+        return view('admin.water_sentiments.show', compact('waterSentiment', 'departments', 'officers'));
     }
 
     /**
@@ -158,5 +163,33 @@ class WaterSentimentController extends Controller
             })
             ->rawColumns(['actions'])
             ->make(true);
+    }
+
+    /**
+     * Assign a water sentiment to a department or officer.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function assign(Request $request, $id)
+    {
+        $request->validate([
+            'department_id' => 'nullable|exists:departments,id',
+            'assigned_to'   => 'nullable|exists:users,id',
+            'admin_notes'   => 'nullable|string',
+        ]);
+
+        $sentiment = WaterSentiment::findOrFail($id);
+        $sentiment->department_id = $request->department_id;
+        $sentiment->assigned_to = $request->assigned_to;
+        $sentiment->assigned_by = auth()->id(); // make sure user is logged in
+        $sentiment->admin_notes = $request->admin_notes;
+        $sentiment->assigned_at = now();
+        $sentiment->status = 'Assigned'; // optional
+
+        $sentiment->save();
+
+        return redirect()->back()->with('success', 'Complaint assigned successfully.');
     }
 }

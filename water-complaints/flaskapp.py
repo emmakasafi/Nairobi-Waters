@@ -53,6 +53,7 @@ class WaterSentiment(Base):
     status = Column(String)
     entity_type = Column(String)
     entity_name = Column(String)
+    department_id = Column(Integer)  # Add this line
 
 # Create the table if it doesn't exist
 Base.metadata.create_all(engine)
@@ -72,7 +73,6 @@ zero_shot_classifier = pipeline("zero-shot-classification", model="facebook/bart
 
 # Complaint Categories
 water_categories = [
-    
     "Billing and Payments",
     "Water Supply and Distribution",
     "Water Quality and Testing",
@@ -83,12 +83,38 @@ water_categories = [
     "Infrastructure and Projects",
     "Environmental and Conservation",
     "ICT and System Access"
-
 ]
+
+# Define departments with unique IDs
+DEPARTMENTS = {
+    1: "Water Quality & Lab Testing",
+    2: "Customer Service",
+    3: "Billing & Finance",
+    4: "Technical/Engineering",
+    5: "Water Distribution / Operations",
+    6: "Maintenance & Repairs",
+    7: "Sanitation & Wastewater",
+    8: "Metering & Installations",
+    9: "General Inquiry"
+}
+
+# Mapping from complaint categories to department IDs
+CATEGORY_TO_DEPARTMENT = {
+    "Water Quality and Testing": 1,
+    "Customer Support and Engagement": 2,
+    "Billing and Payments": 3,
+    "Infrastructure and Projects": 4,
+    "Water Supply and Distribution": 5,
+    "Pipe Leaks and Maintenance": 6,
+    "Sewage and Sanitation": 7,
+    "Metering Services": 8,
+    "Environmental and Conservation": 9,
+    "ICT and System Access": 9  # Assuming General Inquiry handles ICT and System Access
+}
 
 # Text Preprocessing Function
 def preprocess_text(text):
-    """" Cleans and preprocesses complaint text. """
+    """ Cleans and preprocesses complaint text. """
     text = text.lower()
     text = re.sub(r"[^\w\s']", "", text)  
     words = word_tokenize(text)
@@ -101,7 +127,7 @@ def preprocess_text(text):
 def analyze_complaint(original_text):
     """
     Analyzes complaint sentiment and classifies category.
-    Returns both the original and processed text.
+    Returns both the original and processed text along with the department ID.
     """
     processed_text = preprocess_text(original_text)
 
@@ -116,11 +142,15 @@ def analyze_complaint(original_text):
     sentiment_labels = ["negative", "neutral", "positive"]
     sentiment = sentiment_labels[torch.argmax(probabilities).item()]
 
+    # Get the department ID based on the predicted category
+    department_id = CATEGORY_TO_DEPARTMENT.get(predicted_category, None)
+
     return {
         "original_caption": original_text,  
         "processed_caption": processed_text,  
         "sentiment": sentiment,
-        "category": predicted_category
+        "category": predicted_category,
+        "department_id": department_id
     }
 
 # Function to reset the auto-increment sequence
@@ -151,7 +181,8 @@ def analyze():
         result = analyze_complaint(complaint_text)
 
         # Retrieve user details from the session or authentication context
-        user_id = data.get('user_id', "")  
+        user_id_raw = data.get('user_id', None)
+        user_id = int(user_id_raw) if user_id_raw and str(user_id_raw).isdigit() else None
         user_name = data.get('user_name', "") 
         user_email = data.get('user_email', "")  
         user_phone = data.get("user_phone", "")  # Get user_phone from the request
@@ -172,7 +203,8 @@ def analyze():
             user_phone=user_phone,
             status="pending",  # Assuming the status is pending initially
             entity_type=data.get("entity_type", ""),
-            entity_name=data.get("entity_name", "")
+            entity_name=data.get("entity_name", ""),
+            department_id=result["department_id"]  # Add this line
         )
         session.add(new_record)
         session.commit()
