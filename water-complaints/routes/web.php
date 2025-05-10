@@ -69,6 +69,8 @@ Route::get('/customer/dashboard', function () {
 // Customer Logout Route
 Route::post('/customer/logout', [CustomerLogoutController::class, 'logout'])->name('customer.logout');
 
+Route::get('/customer/dashboard', [CustomerDashboardController::class, 'index'])->middleware(['auth:customer', 'role:user'])->name('customer.dashboard');
+
 // Officer Login Routes
 Route::prefix('officer')->name('officer.')->group(function () {
     Route::get('login', [OfficerLoginController::class, 'showLoginForm'])->name('login');

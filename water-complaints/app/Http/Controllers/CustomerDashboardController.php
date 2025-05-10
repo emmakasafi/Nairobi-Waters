@@ -6,25 +6,30 @@ use Illuminate\Http\Request;
 
 class CustomerDashboardController extends Controller
 {
-public function index()
-{
-    // Get all water sentiments (complaints) for the authenticated user along with related user and assigned officer
-    $waterSentiments = WaterSentiment::where('user_id', auth()->id())
-        ->with('user', 'assigned_to') // Fetch the user and assigned officer relationships
-        ->latest() // Get the most recent sentiments first
-        ->get(); // Retrieve all water sentiments for the user
+    public function index()
+    {
+        // Fetch the email of the authenticated user
+        $userEmail = auth()->user()->email;
 
-    // Get count of total, resolved, and pending complaints
-    $resolvedComplaints = $waterSentiments->where('status', 'resolved')->count();
-    $pendingComplaints = $waterSentiments->where('status', 'pending')->count();
-    $totalComplaints = $waterSentiments->count(); // Count total complaints
+        // Fetch water sentiments for the authenticated user, ordered by the 'timestamp' column
+        $waterSentiments = WaterSentiment::where('user_email', $userEmail)
+            ->with('user', 'assignedOfficer') // Eager load the user and assigned officer
+            ->orderBy('timestamp', 'desc') // Order by the 'timestamp' column in descending order
+            ->get();
 
-    // Debug: Check if the variables are set
-    \Log::info('Total Complaints: ' . $totalComplaints);
-    \Log::info('Resolved Complaints: ' . $resolvedComplaints);
-    \Log::info('Pending Complaints: ' . $pendingComplaints);
+        // Calculate the counts for resolved and pending complaints
+        $resolvedComplaints = $waterSentiments->where('status', 'resolved')->count();
+        $pendingComplaints = $waterSentiments->where('status', 'pending')->count();
+        $assignedComplaints = $waterSentiments->where('status', 'assigned')->count(); // Count assigned complaints
+        $totalComplaints = $waterSentiments->count();
 
-    // Pass the data to the view
-    return view('customer-dashboard', compact('waterSentiments', 'resolvedComplaints', 'pendingComplaints', 'totalComplaints'));
-}
+        // Pass the data to the view
+        return view('customer-dashboard', compact(
+            'waterSentiments',
+            'resolvedComplaints',
+            'pendingComplaints',
+            'assignedComplaints', // Pass the count of assigned complaints
+            'totalComplaints'
+        ));
+    }
 }
