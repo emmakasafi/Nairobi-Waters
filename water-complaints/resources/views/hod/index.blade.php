@@ -87,6 +87,7 @@
                                 <th>Customer</th>
                                 <th>Issue</th>
                                 <th>Status</th>
+                                <th>Assigned At</th> <!-- New column for assigned_at -->
                             </tr>
                         </thead>
                         <tbody>
@@ -96,6 +97,9 @@
                                     <td>{{ $complaint->user->name ?? 'Unknown' }}</td>
                                     <td>{{ $complaint->entity_name ?? 'N/A' }}</td>
                                     <td>{{ ucfirst($complaint->status) }}</td>
+                                    <td>
+                                        {{ $complaint->assigned_at ? \Carbon\Carbon::parse($complaint->assigned_at)->diffForHumans() : 'Not assigned' }}
+                                    </td> <!-- Display assigned_at timestamp -->
                                 </tr>
                             @endforeach
                         </tbody>
@@ -130,10 +134,9 @@
                                 </h3>
                                 <p class="text-sm">{{ Str::limit($complaint->processed_caption, 50) }}</p>
                                 <p class="text-sm text-muted">
-                                <i class="far fa-clock mr-1"></i>
-                                {{ $complaint->timestamp ? \Carbon\Carbon::parse($complaint->timestamp)->diffForHumans() : 'Unknown time' }}
-                            </p>
-
+                                    <i class="far fa-clock mr-1"></i>
+                                    {{ $complaint->timestamp ? \Carbon\Carbon::parse($complaint->timestamp)->diffForHumans() : 'Unknown time' }}
+                                </p>
                             </div>
                         </div>
                     </a>

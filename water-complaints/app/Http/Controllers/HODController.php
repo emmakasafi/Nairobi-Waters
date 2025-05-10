@@ -56,6 +56,7 @@ class HODController extends Controller
         $complaint = WaterSentiment::findOrFail($id);
 
         $complaint->assigned_to = $request->officer_id;
+        $complaint->assigned_at = now(); // Set the assigned_at timestamp
         $complaint->status = 'assigned';
         $complaint->save();
 
