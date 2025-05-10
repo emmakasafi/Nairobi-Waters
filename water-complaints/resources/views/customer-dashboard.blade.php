@@ -46,32 +46,18 @@
         <main class="ml-64 w-full p-8">
             <div class="text-2xl font-bold text-gray-800 mb-6">Dashboard Overview</div>
 
-            <!-- Cards Section -->
+            Cards Section
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition">
-                    <div class="flex items-center">
-                        <div class="text-blue-600 text-3xl mr-4"><i class="fas fa-file-alt"></i></div>
-                        <div>
-                            <p class="text-gray-600">Total Complaints</p>
-                            <h3 class="text-xl font-bold">0</h3>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition">
-                    <div class="flex items-center">
-                        <div class="text-green-600 text-3xl mr-4"><i class="fas fa-check-circle"></i></div>
-                        <div>
-                            <p class="text-gray-600">Resolved</p>
-                            <h3 class="text-xl font-bold">0</h3>
-                        </div>
-                    </div>
-                </div>
+                
+
+                
+                <!-- Pending Complaints Card -->
                 <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition">
                     <div class="flex items-center">
                         <div class="text-yellow-600 text-3xl mr-4"><i class="fas fa-clock"></i></div>
                         <div>
                             <p class="text-gray-600">Pending</p>
-                            <h3 class="text-xl font-bold">0</h3>
+                            <h3 class="text-xl font-bold">{{ $pendingComplaints }}</h3> <!-- Display pending complaints -->
                         </div>
                     </div>
                 </div>
@@ -80,7 +66,16 @@
             <!-- Recent Complaints -->
             <div class="bg-white p-6 rounded shadow">
                 <h3 class="text-lg font-bold mb-4">Recent Complaints</h3>
-                <p class="text-gray-600">No recent complaints.</p>
+                @forelse ($waterSentiments as $waterSentiment)
+                    <div class="border-b py-3">
+                        <p class="text-gray-600"><strong>Complaint:</strong> {{ $waterSentiment->original_caption }}</p>
+                        <p class="text-gray-600"><strong>Status:</strong> {{ ucfirst($waterSentiment->status) }}</p>
+                        <p class="text-gray-600"><strong>Assigned Officer:</strong> {{ $waterSentiment->assignedOfficer->name ?? 'N/A' }}</p>
+                        <p class="text-gray-600"><strong>Timestamp:</strong> {{ $waterSentiment->timestamp->format('Y-m-d H:i') }}</p>
+                    </div>
+                @empty
+                    <p class="text-gray-600">No recent complaints.</p>
+                @endforelse
             </div>
         </main>
     </div>

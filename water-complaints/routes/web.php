@@ -6,6 +6,7 @@ use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\Auth\AdminLoginController;
 use App\Http\Controllers\Auth\CustomerLoginController;
 use App\Http\Controllers\Auth\CustomerLogoutController;
+use App\Http\Controllers\CustomerDashboardController;
 use App\Http\Controllers\Auth\OfficerLoginController;
 use App\Http\Controllers\Auth\HodLoginController;
 use App\Http\Controllers\WaterSentimentController;
@@ -56,6 +57,9 @@ Route::get('/customer/login', function () {
 })->name('customer.login');
 
 Route::post('/customer/login', [CustomerLoginController::class, 'login'])->name('customer.login.submit');
+
+Route::get('/customer/dashboard', [CustomerDashboardController::class, 'index'])->name('customer.dashboard');
+
 
 // Customer Dashboard Route
 Route::get('/customer/dashboard', function () {
