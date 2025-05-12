@@ -20,7 +20,7 @@ class OfficerLoginController extends Controller
 
     if (Auth::attempt($credentials, $request->filled('remember'))) {
         // Redirect to officer dashboard
-        return redirect()->route('officer.index');
+        return redirect()->route('officer.officer.index');
 
     }
 

@@ -28,7 +28,7 @@
                     <td>{{ $waterSentiment->user->name ?? 'Unknown' }}</td>
                     <td>{{ $waterSentiment->title }}</td>
                     <td>{{ ucfirst($waterSentiment->status) }}</td>
-                    <td><a href="{{ route('officer.show', $waterSentiment->id) }}" class="btn btn-info btn-sm">View</a></td>
+                    <td><a href="{{ route('officer.officer.show', $waterSentiment->id) }}" class="btn btn-info btn-sm">View</a></td>
                 </tr>
             @endforeach
         </tbody>

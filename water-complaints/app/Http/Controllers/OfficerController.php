@@ -42,9 +42,9 @@ class OfficerController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $waterSentiment = WaterSentiment::with('user')->findOrFail($id);
+        return view('officer.show', compact('waterSentiment'));
     }
-
     /**
      * Show the form for editing the specified resource.
      */

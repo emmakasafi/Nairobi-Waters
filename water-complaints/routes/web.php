@@ -147,7 +147,13 @@ Route::post('hod/logout', [HodLoginController::class, 'logout'])->name('hod.logo
 // For Officer
 Route::middleware(['auth', 'role:officer'])->prefix('officer')->name('officer.')->group(function () {
     Route::resource('officer', OfficerController::class)->names([
-        'index' => 'index', // This ensures 'officer.index' points to the 'index' method
+        'index' => 'officer.index',
+        'create' => 'officer.create',
+        'store' => 'officer.store',
+        'show' => 'officer.show',
+        'edit' => 'officer.edit',
+        'update' => 'officer.update',
+        'destroy' => 'officer.destroy',
     ]);
     Route::post('/officer/update-status/{complaint}', [OfficerController::class, 'updateStatus'])->name('officer.updateStatus');
 });
