@@ -176,7 +176,7 @@
                 </div>
             </div>
 
-            <!-- Charts -->
+            Charts
             <div class="row">
                 <div class="col-md-6">
                     <div class="card card-primary">
