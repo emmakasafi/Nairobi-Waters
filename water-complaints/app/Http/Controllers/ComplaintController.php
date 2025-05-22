@@ -5,16 +5,53 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use App\Models\WaterSentiment;
+use App\Models\Officer; // Ensure you have this model
 
 class ComplaintController extends Controller
 {
     /**
      * Display a listing of complaints.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $complaints = WaterSentiment::all();
-        return view('complaints.index', compact('complaints'));
+        $query = $request->input('query');
+        $status = $request->input('status');
+
+        // Start query builder
+        $complaintsQuery = WaterSentiment::query();
+
+        // Search by original complaint content
+        if ($query) {
+            $complaintsQuery->where('original_caption', 'like', '%' . $query . '%');
+        }
+
+        // Filter by status if provided
+        if ($status) {
+            $complaintsQuery->where('status', $status);
+        }
+
+        // Get the filtered results
+        $complaints = $complaintsQuery->orderBy('timestamp', 'desc')->get();
+
+        // Metrics for dashboard summary
+        $totalComplaints = WaterSentiment::count();
+        $resolvedComplaints = WaterSentiment::where('status', 'resolved')->count();
+        $pendingComplaints = WaterSentiment::where('status', 'pending')->count();
+        $assignedComplaints = WaterSentiment::where('status', 'assigned')->count();
+
+        // Fetch officers and timestamps for filters
+        $officers = Officer::all(); // Fetch all officers
+        $timestamps = WaterSentiment::select('timestamp')->distinct()->get()->pluck('timestamp'); // Fetch distinct timestamps
+
+        return view('complaints.index', compact(
+            'complaints',
+            'totalComplaints',
+            'resolvedComplaints',
+            'pendingComplaints',
+            'assignedComplaints',
+            'officers',
+            'timestamps'
+        ));
     }
 
     /**
