@@ -1,119 +1,95 @@
 {{-- resources/views/admin/water_sentiments.blade.php --}}
 
-@extends('layouts.app')
+@extends('adminlte::page')
 
-@push('styles')
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
-    <style>
-        body {
-            font-family: 'ui-sans-serif', 'system-ui', 'sans-serif';
-        }
+@section('title', 'Water Sentiments')
 
-        div.dataTables_length label {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.875rem;
-            color: #374151;
-        }
-
-        div.dataTables_length select {
-            padding: 0.375rem 1rem;
-            border-radius: 0.5rem;
-            border: 1px solid #d1d5db;
-            background-color: white;
-            font-size: 0.875rem;
-        }
-
-        div.dataTables_filter input {
-            padding: 0.375rem 0.75rem;
-            border-radius: 0.5rem;
-            border: 1px solid #d1d5db;
-            font-size: 0.875rem;
-        }
-
-        div.dataTables_paginate .paginate_button {
-            padding: 0.375rem 0.75rem;
-            margin: 0 2px;
-            border-radius: 0.5rem;
-            background-color: #f3f4f6;
-            border: 1px solid #d1d5db;
-            font-size: 0.875rem;
-        }
-
-        div.dataTables_paginate .paginate_button.current {
-            background-color: #0077B6;
-            color: white !important;
-        }
-    </style>
-@endpush
+@section('content_header')
+    <h1 class="text-2xl font-semibold text-gray-800">Water Sentiments</h1>
+@stop
 
 @section('content')
-<div class="p-4">
-    <h1 class="text-2xl font-semibold mb-4 text-gray-800">Water Sentiments</h1>
-
-    <div class="overflow-x-auto bg-white rounded-lg shadow-xl p-4">
-        <table id="sentimentsTable" class="min-w-full">
+    <div class="bg-white rounded shadow p-4">
+        <table id="sentimentsTable" class="table table-bordered table-hover">
             <thead class="bg-gray-200 text-gray-700">
                 <tr>
-                    <th class="px-4 py-2">ID</th>
-                    <th class="px-4 py-2">User ID</th>
-                    <th class="px-4 py-2">User Name</th>
-                    <th class="px-4 py-2">User Email</th>
-                    <th class="px-4 py-2">User Phone</th>
-                    <th class="px-4 py-2">Original Caption</th>
-                    <th class="px-4 py-2">Processed Caption</th>
-                    <th class="px-4 py-2">Timestamp</th>
-                    <th class="px-4 py-2">Overall Sentiment</th>
-                    <th class="px-4 py-2">Complaint Category</th>
-                    <th class="px-4 py-2">Source</th>
-                    <th class="px-4 py-2">Subcounty</th>
-                    <th class="px-4 py-2">Ward</th>
-                    <th class="px-4 py-2">Status</th>
-                    <th class="px-4 py-2">Entity Type</th>
-                    <th class="px-4 py-2">Entity Name</th>
-                    <th class="px-4 py-2">Actions</th>
+                    <th>ID</th>
+                    <th>User ID</th>
+                    <th>User Name</th>
+                    <th>User Email</th>
+                    <th>User Phone</th>
+                    <th>Original Caption</th>
+                    <th>Processed Caption</th>
+                    <th>Timestamp</th>
+                    <th>Overall Sentiment</th>
+                    <th>Complaint Category</th>
+                    <th>Source</th>
+                    <th>Subcounty</th>
+                    <th>Ward</th>
+                    <th>Status</th>
+                    <th>Entity Type</th>
+                    <th>Entity Name</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach ($water_sentiments as $water_sentiment)
                     <tr>
-                        <td class="px-4 py-2">{{ $water_sentiment->id }}</td>
-                        <td class="px-4 py-2">{{ $water_sentiment->user_id }}</td>
-                        <td class="px-4 py-2">{{ $water_sentiment->user_name }}</td>
-                        <td class="px-4 py-2">{{ $water_sentiment->user_email }}</td>
-                        <td class="px-4 py-2">{{ $water_sentiment->user_phone }}</td>
-                        <td class="px-4 py-2">{{ $water_sentiment->original_caption }}</td>
-                        <td class="px-4 py-2">{{ $water_sentiment->processed_caption }}</td>
-                        <td class="px-4 py-2">{{ $water_sentiment->timestamp }}</td>
-                        <td class="px-4 py-2">{{ $water_sentiment->overall_sentiment }}</td>
-                        <td class="px-4 py-2">{{ $water_sentiment->complaint_category }}</td>
-                        <td class="px-4 py-2">{{ $water_sentiment->source }}</td>
-                        <td class="px-4 py-2">{{ $water_sentiment->subcounty }}</td>
-                        <td class="px-4 py-2">{{ $water_sentiment->ward }}</td>
-                        <td class="px-4 py-2">{{ $water_sentiment->status }}</td>
-                        <td class="px-4 py-2">{{ $water_sentiment->entity_type }}</td>
-                        <td class="px-4 py-2">{{ $water_sentiment->entity_name }}</td>
-                        <td class="px-4 py-2 whitespace-nowrap">
-                            <div class="flex space-x-2">
-                                <a href="{{ route('water_sentiments.show', $water_sentiment->id) }}" class="px-3 py-1 bg-green-500 hover:bg-green-700 text-white rounded-lg text-sm">View</a>
-                                <a href="{{ route('water_sentiments.edit', $water_sentiment->id) }}" class="px-3 py-1 bg-yellow-500 hover:bg-yellow-700 text-white rounded-lg text-sm">Edit</a>
-                                <form action="{{ route('water_sentiments.destroy', $water_sentiment->id) }}" method="POST" onsubmit="return confirm('Are you sure?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="px-3 py-1 bg-red-500 hover:bg-red-700 text-white rounded-lg text-sm">Delete</button>
-                                </form>
-                            </div>
+                        <td>{{ $water_sentiment->id }}</td>
+                        <td>{{ $water_sentiment->user_id }}</td>
+                        <td>{{ $water_sentiment->user_name }}</td>
+                        <td>{{ $water_sentiment->user_email }}</td>
+                        <td>{{ $water_sentiment->user_phone }}</td>
+                        <td>{{ $water_sentiment->original_caption }}</td>
+                        <td>{{ $water_sentiment->processed_caption }}</td>
+                        <td>{{ $water_sentiment->timestamp }}</td>
+                        <td>{{ $water_sentiment->overall_sentiment }}</td>
+                        <td>{{ $water_sentiment->complaint_category }}</td>
+                        <td>{{ $water_sentiment->source }}</td>
+                        <td>{{ $water_sentiment->subcounty }}</td>
+                        <td>{{ $water_sentiment->ward }}</td>
+                        <td>{{ $water_sentiment->status }}</td>
+                        <td>{{ $water_sentiment->entity_type }}</td>
+                        <td>{{ $water_sentiment->entity_name }}</td>
+                        <td class="text-nowrap">
+                            <a href="{{ route('water_sentiments.show', $water_sentiment->id) }}" class="btn btn-success btn-sm">View</a>
+                            <a href="{{ route('water_sentiments.edit', $water_sentiment->id) }}" class="btn btn-warning btn-sm">Edit</a>
+                            <form action="{{ route('water_sentiments.destroy', $water_sentiment->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure?');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                            </form>
                         </td>
                     </tr>
                 @endforeach
             </tbody>
         </table>
     </div>
-</div>
-@endsection
+@stop
 
-@push('scripts')
+@section('css')
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+    <style>
+        .dataTables_wrapper .dataTables_length select {
+            padding: 0.375rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #d1d5db;
+        }
+
+        .dataTables_wrapper .dataTables_filter input {
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.5rem;
+            border: 1px solid #d1d5db;
+        }
+
+        .paginate_button.current {
+            background-color: #0077B6 !important;
+            color: white !important;
+        }
+    </style>
+@stop
+
+@section('js')
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script>
@@ -125,4 +101,4 @@
             });
         });
     </script>
-@endpush
+@stop
