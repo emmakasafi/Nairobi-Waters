@@ -104,22 +104,8 @@
                                 <option value="Assigned">Assigned</option>
                             </select>
                         </div>
-                        <div class="col-md-3">
-                            <select class="form-control form-control-sm" id="filter_officer">
-                                <option value="">All</option>
-                                @foreach ($officers as $officer)
-                                    <option value="{{ $officer->name }}">{{ $officer->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <select class="form-control form-control-sm" id="filter_timestamp">
-                                <option value="">All</option>
-                                @foreach ($timestamps as $timestamp)
-                                    <option value="{{ $timestamp }}">{{ $timestamp }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+                        
+                        
                     </div>
                 </div>
             </div>
@@ -132,7 +118,7 @@
             <h3 class="card-title">Recent Complaints</h3>
         </div>
         <div class="card-body">
-            @if($complaints->count())
+            @if($waterSentiments->count())
                 <table id="complaintsTable" class="table table-bordered table-hover">
                     <thead>
                         <tr>
@@ -143,12 +129,12 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($complaints as $complaint)
+                        @foreach ($waterSentiments as $waterSentiment)
                             <tr>
-                                <td>{{ $complaint->original_caption }}</td>
-                                <td>{{ ucfirst($complaint->status) }}</td>
-                                <td>{{ $complaint->assignedOfficer->name ?? 'N/A' }}</td>
-                                <td>{{ optional($complaint->timestamp)->format('Y-m-d H:i') ?? 'N/A' }}</td>
+                                <td>{{ $waterSentiment->original_caption }}</td>
+                                <td>{{ ucfirst($waterSentiment->status) }}</td>
+                                <td>{{ $waterSentiment->assignedOfficer->name ?? 'N/A' }}</td>
+                                <td>{{ optional($waterSentiment->timestamp)->format('Y-m-d H:i') ?? 'N/A' }}</td>
                             </tr>
                         @endforeach
                     </tbody>
