@@ -77,6 +77,11 @@ class AdminDashboardController extends Controller
         $sentiments = WaterSentiment::select('overall_sentiment')->distinct()->get()->pluck('overall_sentiment');
         $sources = WaterSentiment::select('source')->distinct()->get()->pluck('source');
 
+        // Data for complaint statuses
+        $complaintStatuses = WaterSentiment::select('status', DB::raw('COUNT(*) as count'))
+            ->groupBy('status')
+            ->get();
+
         // Fetch departments
         $departments = Department::all();
 
@@ -95,9 +100,13 @@ class AdminDashboardController extends Controller
             'wards',
             'sentiments',
             'sources',
+            'complaintStatuses', // Add this line
             'departments' // Add this line
         ));
     }
+
+    // Other methods...
+
 public function dashboard()
 {
     $departments = Department::all();
