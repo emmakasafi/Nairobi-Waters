@@ -92,6 +92,7 @@ return [
          * Package Service Providers...
          */
         Yajra\DataTables\DataTablesServiceProvider::class,
+        Webklex\IMAP\Providers\LaravelServiceProvider::class, // Corrected service provider
 
         /*
          * Application Service Providers...
@@ -111,6 +112,7 @@ return [
     'aliases' => Facade::defaultAliases()->merge([
         // 'Example' => App\Facades\Example::class,
         'DataTables' => Yajra\DataTables\Facades\DataTables::class,
+        'IMAP' => Webklex\IMAP\Facades\Client::class, // Corrected facade
     ])->toArray(),
 
 ];
