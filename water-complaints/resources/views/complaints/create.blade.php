@@ -4,23 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nairobi Waters Complaint Form</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4f4;
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
             margin: 0;
             padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
         .container {
-            max-width: 600px;
-            margin: 50px auto;
-            padding: 20px;
             background: #fff;
+            padding: 20px;
+            border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            position: relative;
+            overflow: hidden;
         }
         h1 {
             text-align: center;
             color: #333;
+            margin-bottom: 20px;
         }
         form {
             display: flex;
@@ -29,12 +38,21 @@
         label {
             margin-bottom: 5px;
             font-weight: bold;
+            color: #555;
         }
         input, select, textarea {
             margin-bottom: 15px;
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
+            font-size: 1rem;
+            color: #333;
+            background-color: #f9f9f9;
+            transition: border-color 0.3s ease;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: #28a745;
+            outline: none;
         }
         button {
             padding: 10px 20px;
@@ -43,6 +61,8 @@
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
         }
         button:hover {
             background-color: #218838;
@@ -59,6 +79,7 @@
             z-index: 1000;
             display: none;
             white-space: pre-line;
+            font-size: 1rem;
         }
         .success-positive {
             background-color: #d1ecf1;
@@ -84,6 +105,48 @@
             text-align: center;
             font-weight: bold;
             display: none;
+            font-size: 1rem;
+        }
+        .character-count {
+            font-size: 0.85rem;
+            color: #666;
+            text-align: right;
+            margin-bottom: 15px;
+        }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 120px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -60px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        .form-group {
+            position: relative;
+        }
+        .form-group i {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            right: 10px;
+            color: #ccc;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -93,48 +156,75 @@
     <form id="complaintForm">
         @csrf
 
-        <label for="userName">Name:</label>
-        <input type="text" id="userName" name="user_name" value="{{ Auth::user()->name }}" readonly>
+        <div class="form-group">
+            <label for="userName">Name:</label>
+            <input type="text" id="userName" name="user_name" value="{{ Auth::user()->name }}" readonly placeholder="Your Name">
+            <i class="fas fa-user"></i>
+        </div>
 
-        <label for="userEmail">Email:</label>
-        <input type="email" id="userEmail" name="user_email" value="{{ Auth::user()->email }}" readonly>
+        <div class="form-group">
+            <label for="userEmail">Email:</label>
+            <input type="email" id="userEmail" name="user_email" value="{{ Auth::user()->email }}" readonly placeholder="Your Email">
+            <i class="fas fa-envelope"></i>
+        </div>
 
-        <label for="userPhone">Phone Number:</label>
-        <input type="tel" id="userPhone" name="user_phone">
+        <div class="form-group">
+            <label for="userPhone">Phone Number:</label>
+            <input type="tel" id="userPhone" name="user_phone" placeholder="Your Phone Number">
+            <i class="fas fa-phone"></i>
+        </div>
 
-        <label for="subcounty">Subcounty:</label>
-        <select id="subcounty" name="subcounty" required>
-            <option value="">Select Subcounty</option>
-        </select>
+        <div class="form-group">
+            <label for="subcounty">Subcounty:</label>
+            <select id="subcounty" name="subcounty" required>
+                <option value="">Select Subcounty</option>
+            </select>
+            <i class="fas fa-map-marker-alt"></i>
+        </div>
 
-        <label for="ward">Ward:</label>
-        <select id="ward" name="ward" required>
-            <option value="">Select Ward</option>
-        </select>
+        <div class="form-group">
+            <label for="ward">Ward:</label>
+            <select id="ward" name="ward" required>
+                <option value="">Select Ward</option>
+            </select>
+            <i class="fas fa-map-marker-alt"></i>
+        </div>
 
-        <label for="complaint">Complaint:</label>
-        <textarea id="complaint" name="complaint" required></textarea>
+        <div class="form-group">
+            <label for="complaint">Complaint:</label>
+            <textarea id="complaint" name="complaint" required placeholder="Describe your complaint here..."></textarea>
+            <div class="character-count" id="characterCount">0/500</div>
+        </div>
 
-        <label for="frequency">Frequency:</label>
-        <select id="frequency" name="frequency" required>
-            <option value="First time">First time</option>
-            <option value="Daily">Daily</option>
-            <option value="Weekly">Weekly</option>
-            <option value="Monthly">Monthly</option>
-            <option value="Other">Other</option>
-        </select>
+        <div class="form-group">
+            <label for="frequency">Frequency:</label>
+            <select id="frequency" name="frequency" required>
+                <option value="First time">First time</option>
+                <option value="Daily">Daily</option>
+                <option value="Weekly">Weekly</option>
+                <option value="Monthly">Monthly</option>
+                <option value="Other">Other</option>
+            </select>
+            <i class="fas fa-calendar-alt"></i>
+        </div>
 
-        <label for="entityType">Entity Type:</label>
-        <select id="entityType" name="entity_type" required>
-            <option value="Individual">Individual</option>
-            <option value="Estate">Estate</option>
-            <option value="School">School</option>
-            <option value="Hospital">Hospital</option>
-            <option value="Other">Other</option>
-        </select>
+        <div class="form-group">
+            <label for="entityType">Entity Type:</label>
+            <select id="entityType" name="entity_type" required>
+                <option value="Individual">Individual</option>
+                <option value="Estate">Estate</option>
+                <option value="School">School</option>
+                <option value="Hospital">Hospital</option>
+                <option value="Other">Other</option>
+            </select>
+            <i class="fas fa-building"></i>
+        </div>
 
-        <label for="entityName">Entity Name:</label>
-        <input type="text" id="entityName" name="entity_name">
+        <div class="form-group">
+            <label for="entityName">Entity Name:</label>
+            <input type="text" id="entityName" name="entity_name" placeholder="Name of the entity">
+            <i class="fas fa-signature"></i>
+        </div>
 
         <button type="submit">Submit Complaint</button>
     </form>
@@ -252,6 +342,12 @@
             popupMessage.style.display = 'block';
             setTimeout(() => popupMessage.style.display = 'none', 5000);
         });
+    });
+
+    // Character count for complaint textarea
+    document.getElementById('complaint').addEventListener('input', function() {
+        const count = this.value.length;
+        document.getElementById('characterCount').textContent = `${count}/500`;
     });
 </script>
 </body>
