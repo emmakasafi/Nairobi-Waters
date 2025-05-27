@@ -1,7 +1,9 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\WaterSentiment;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 
 class CustomerDashboardController extends Controller
@@ -23,13 +25,21 @@ class CustomerDashboardController extends Controller
         $assignedComplaints = $waterSentiments->where('status', 'assigned')->count(); // Count assigned complaints
         $totalComplaints = $waterSentiments->count();
 
+        // Fetch notifications for the authenticated user
+        $notifications = Notification::where('user_id', auth()->id())
+            ->where('type', 'status_confirmation_required')
+            ->where('action_required', true)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         // Pass the data to the view
         return view('customer-dashboard', compact(
             'waterSentiments',
             'resolvedComplaints',
             'pendingComplaints',
-            'assignedComplaints', // Pass the count of assigned complaints
-            'totalComplaints'
+            'assignedComplaints',
+            'totalComplaints',
+            'notifications'
         ));
     }
 }

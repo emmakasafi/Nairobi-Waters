@@ -92,7 +92,7 @@
                             <i class="fas fa-comment-alt mr-2"></i>Complaint Description
                         </h5>
                         <div class="content-box">
-                            <p class="mb-0">{{ $waterSentiment->text }}</p>
+                            <p class="mb-0">{{ $waterSentiment->original_caption }}</p>
                         </div>
                     </div>
 
@@ -105,10 +105,19 @@
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-map-marker-alt text-danger mr-3 fa-lg"></i>
                                 <div>
-                                    <strong class="d-block">{{ $waterSentiment->location ?? 'Location not specified' }}</strong>
-                                    @if($waterSentiment->subcounty)
-                                        <small class="text-muted">{{ $waterSentiment->subcounty }} Subcounty</small>
+                                    <strong class="d-block">{{ $waterSentiment->subcounty ?? 'Subcounty not specified' }}</strong>
+                                    @if($waterSentiment->ward)
+                                        <small class="text-muted">
+                                            {{ $waterSentiment->ward }} Ward
+                                            @if($waterSentiment->entity_type)
+                                                &nbsp;|&nbsp;{{ $waterSentiment->entity_type }}
+                                            @endif
+                                            @if($waterSentiment->entity_name)
+                                                &nbsp;|&nbsp;{{ $waterSentiment->entity_name }}
+                                            @endif
+                                        </small>
                                     @endif
+
                                 </div>
                             </div>
                         </div>
@@ -140,28 +149,31 @@
                         @csrf
                         @method('PUT')
                         
-                        <div class="form-group mb-4">
-                            <label for="status" class="form-label">Update Status <span class="text-danger">*</span></label>
-                            <select name="status" id="status" class="form-control modern-select @error('status') is-invalid @enderror" required>
-                                <option value="">-- Select New Status --</option>
-                                <option value="pending" {{ $waterSentiment->status === 'pending' ? 'selected' : '' }}>
-                                    📋 Pending Review
-                                </option>
-                                <option value="in_progress" {{ $waterSentiment->status === 'in_progress' ? 'selected' : '' }}>
-                                    ⚡ In Progress
-                                </option>
-                                <option value="resolved" {{ $waterSentiment->status === 'resolved' ? 'selected' : '' }}>
-                                    ✅ Resolved
-                                </option>
-                                <option value="closed" {{ $waterSentiment->status === 'closed' ? 'selected' : '' }}>
-                                    🔒 Closed
-                                </option>
-                            </select>
-                            @error('status')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
+                        <!-- Status Select Field with Current Status Pre-selected -->
+<div class="form-group mb-4">
+    <label for="status" class="form-label">Update Status <span class="text-danger">*</span></label>
+    <select name="status" id="status" class="form-control modern-select @error('status') is-invalid @enderror" required>
+        <option value="pending" {{ old('status', $waterSentiment->status) === 'pending' ? 'selected' : '' }}>
+            📋 Pending Review
+        </option>
+        <option value="in_progress" {{ old('status', $waterSentiment->status) === 'in_progress' ? 'selected' : '' }}>
+            ⚡ In Progress
+        </option>
+        <option value="resolved" {{ old('status', $waterSentiment->status) === 'resolved' ? 'selected' : '' }}>
+            ✅ Resolved
+        </option>
+        <option value="closed" {{ old('status', $waterSentiment->status) === 'closed' ? 'selected' : '' }}>
+            🔒 Closed
+        </option>
+    </select>
+    @error('status')
+        <div class="invalid-feedback">{{ $message }}</div>
+    @enderror
+    <small class="form-text text-muted mt-2">
+        <i class="fas fa-info-circle mr-1"></i>
+        Current status: <strong>{{ ucfirst(str_replace('_', ' ', $waterSentiment->status)) }}</strong>
+    </small>
+</div>
                         <div class="form-group mb-4">
                             <label for="notes" class="form-label">Officer Notes</label>
                             <textarea name="notes" id="notes" class="form-control modern-textarea @error('notes') is-invalid @enderror" rows="6" placeholder="Add detailed notes about actions taken, findings, or next steps...">{{ old('notes', $waterSentiment->officer_notes) }}</textarea>
@@ -203,7 +215,7 @@
                         <div class="info-value">
                             <span class="badge badge-primary modern-badge">
                                 <i class="fas fa-tag mr-1"></i>
-                                {{ ucfirst($waterSentiment->complaint_category ?? 'General') }}
+                               {{ ucfirst($waterSentiment->complaint_category ?? 'General') }}
                             </span>
                         </div>
                     </div>
@@ -700,9 +712,20 @@
 @stop
 
 @section('js')
-
     <script>
         $(document).ready(function() {
+            // Set initial placeholder based on current status
+            var initialStatus = $('#status').val();
+            var placeholders = {
+                'resolved': 'Describe the resolution steps taken and final outcome...',
+                'closed': 'Provide reason for closing and any final notes...',
+                'in_progress': 'Detail current actions being taken and next steps...',
+                'pending': 'Add any initial observations or assignment notes...'
+            };
+            if (placeholders[initialStatus]) {
+                $('#notes').attr('placeholder', placeholders[initialStatus]);
+            }
+
             // Auto-hide alerts after 5 seconds
             setTimeout(function() {
                 $('.modern-alert').fadeOut('slow');
@@ -738,13 +761,6 @@
                 }
                 
                 // Update placeholder based on status
-                var placeholders = {
-                    'resolved': 'Describe the resolution steps taken and final outcome...',
-                    'closed': 'Provide reason for closing and any final notes...',
-                    'in_progress': 'Detail current actions being taken and next steps...',
-                    'pending': 'Add any initial observations or assignment notes...'
-                };
-                
                 if (placeholders[status]) {
                     notesField.attr('placeholder', placeholders[status]);
                 }
