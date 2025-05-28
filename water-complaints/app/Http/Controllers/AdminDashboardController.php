@@ -12,8 +12,6 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 
-
-
 class AdminDashboardController extends Controller
 {
     /**
@@ -191,6 +189,40 @@ class AdminDashboardController extends Controller
         ));
     }
 
+    /**
+     * Fetch wards for a given subcounty via AJAX.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getWardsBySubcounty(Request $request)
+    {
+        $subcounty = $request->query('subcounty');
+
+        if ($subcounty && $subcounty !== 'All Subcounties') {
+            $wards = WaterSentiment::where('subcounty', $subcounty)
+                ->select('ward')
+                ->distinct()
+                ->get()
+                ->pluck('ward')
+                ->filter()
+                ->map(function ($ward) {
+                    return htmlspecialchars($ward, ENT_QUOTES, 'UTF-8');
+                })->values();
+        } else {
+            $wards = WaterSentiment::select('ward')
+                ->distinct()
+                ->get()
+                ->pluck('ward')
+                ->filter()
+                ->map(function ($ward) {
+                    return htmlspecialchars($ward, ENT_QUOTES, 'UTF-8');
+                })->values();
+        }
+
+        return response()->json($wards);
+    }
+
     public function exportCsv(Request $request)
     {
         $query = $this->applyFilters($request);
@@ -359,8 +391,6 @@ class AdminDashboardController extends Controller
     public function dashboard()
     {
         $departments = Department::all();
-        // Other data fetching logic...
-
         return view('admin.dashboard', compact('departments'));
     }
 }

@@ -174,4 +174,6 @@ Route::get('/admin/export/pdf', [AdminDashboardController::class, 'exportPdf'])-
 
 Route::resource('departments', DepartmentController::class);
 
+Route::get('/admin/wards-by-subcounty', [App\Http\Controllers\AdminDashboardController::class, 'getWardsBySubcounty'])->name('admin.wards.by.subcounty');
+
 require __DIR__.'/auth.php';

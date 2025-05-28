@@ -208,11 +208,11 @@
                 <canvas id="sentimentChart"></canvas>
             </div>
             <div class="card p-6">
-                <h3 class="text-xl font-semibold text-gray-800 mb-4">Sentiment Trends</h3>
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Sentiment Trends Over Time</h3>
                 <canvas id="sentimentTrendChart"></canvas>
             </div>
             <div class="card p-6">
-                <h3 class="text-xl font-semibold text-gray-800 mb-4">Location Distribution</h3>
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Complaints by Subcounty</h3>
                 <canvas id="locationChart"></canvas>
             </div>
         </div>
@@ -266,7 +266,7 @@
         </div>
     </main>
 
-    <!-- Chart.js Scripts -->
+    <!-- JavaScript -->
     <script>
         // Helper function to safely get chart data
         function getChartData(labels, data, defaultLabels = ['No Data'], defaultData = [0]) {
@@ -275,6 +275,62 @@
                 data: data && data.length ? data : defaultData
             };
         }
+
+        // Dynamic Ward Dropdown
+        document.getElementById('subcounty').addEventListener('change', function () {
+            const subcounty = this.value;
+            const wardSelect = document.getElementById('ward');
+            wardSelect.innerHTML = '<option value="All Wards">All Wards</option>';
+
+            if (subcounty) {
+                fetch(`{{ route('admin.wards.by.subcounty') }}?subcounty=${encodeURIComponent(subcounty)}`, {
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(wards => {
+                    wards.forEach(ward => {
+                        const option = document.createElement('option');
+                        option.value = ward;
+                        option.textContent = ward;
+                        if (ward === '{{ request('ward') }}') {
+                            option.selected = true;
+                        }
+                        wardSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error fetching wards:', error));
+            } else {
+                // Populate all wards if "All Subcounties" is selected
+                const allWards = @json($wards);
+                allWards.forEach(ward => {
+                    const option = document.createElement('option');
+                    option.value = ward;
+                    option.textContent = ward;
+                    if (ward === '{{ request('ward') }}') {
+                        option.selected = true;
+                    }
+                    wardSelect.appendChild(option);
+                });
+            }
+        });
+
+        // Trigger change event on page load to populate wards if subcounty is pre-selected
+        document.getElementById('subcounty').dispatchEvent(new Event('change'));
+
+        // Color palette for charts
+        const colorPalette = [
+            '#34d399', // Green (Positive/Resolved)
+            '#ef4444', // Red (Negative/Critical)
+            '#facc15', // Yellow (Neutral/Pending)
+            '#3b82f6', // Blue
+            '#a855f7', // Purple
+            '#ec4899', // Pink
+            '#14b8a6', // Teal
+            '#f97316'  // Orange
+        ];
 
         // Complaint Status Chart
         const complaintStatusData = getChartData(
@@ -288,7 +344,7 @@
                 labels: complaintStatusData.labels,
                 datasets: [{
                     data: complaintStatusData.data,
-                    backgroundColor: ['#34d399', '#facc15', '#ef4444'],
+                    backgroundColor: ['#34d399', '#facc15', '#ef4444'], // Resolved, Pending, Critical
                     borderColor: '#ffffff',
                     borderWidth: 2
                 }]
@@ -296,7 +352,18 @@
             options: {
                 responsive: true,
                 plugins: {
-                    legend: { position: 'top' }
+                    legend: { position: 'top' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
                 }
             }
         });
@@ -314,7 +381,12 @@
                 datasets: [{
                     label: 'Sentiment Count',
                     data: sentimentDataChart.data,
-                    backgroundColor: '#60a5fa',
+                    backgroundColor: sentimentDataChart.labels.map(label => {
+                        if (label === 'Positive') return '#34d399';
+                        if (label === 'Negative') return '#ef4444';
+                        if (label === 'Neutral') return '#facc15';
+                        return '#60a5fa';
+                    }),
                     borderColor: '#2563eb',
                     borderWidth: 1
                 }]
@@ -322,7 +394,23 @@
             options: {
                 responsive: true,
                 scales: {
-                    y: { beginAtZero: true }
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Number of Complaints' }
+                    },
+                    x: {
+                        title: { display: true, text: 'Sentiment' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.raw}`;
+                            }
+                        }
+                    }
                 }
             }
         });
@@ -331,14 +419,20 @@
         const sentimentTrends = @json($sentimentTrendData);
         const dates = sentimentTrends && sentimentTrends.length ? [...new Set(sentimentTrends.map(item => item.date))] : ['No Data'];
         const sentiments = sentimentTrends && sentimentTrends.length ? [...new Set(sentimentTrends.map(item => item.overall_sentiment))] : ['No Data'];
-        const datasets = sentiments.map(sentiment => ({
+        const datasets = sentiments.map((sentiment, index) => ({
             label: sentiment,
             data: dates.map(date => {
                 const item = sentimentTrends.find(t => t.date === date && t.overall_sentiment === sentiment);
                 return item ? item.count : 0;
             }),
-            borderColor: sentiment === 'Positive' ? '#34d399' : sentiment === 'Negative' ? '#ef4444' : '#facc15',
-            fill: false
+            borderColor: sentiment === 'Positive' ? '#34d399' :
+                        sentiment === 'Negative' ? '#ef4444' :
+                        sentiment === 'Neutral' ? '#facc15' : colorPalette[index % colorPalette.length],
+            backgroundColor: sentiment === 'Positive' ? 'rgba(52, 211, 153, 0.2)' :
+                            sentiment === 'Negative' ? 'rgba(239, 68, 68, 0.2)' :
+                            sentiment === 'Neutral' ? 'rgba(250, 204, 21, 0.2)' : `rgba(${colorPalette[index % colorPalette.length]}, 0.2)`,
+            fill: true,
+            tension: 0.4
         }));
         const sentimentTrendCtx = document.getElementById('sentimentTrendChart').getContext('2d');
         new Chart(sentimentTrendCtx, {
@@ -350,7 +444,25 @@
             options: {
                 responsive: true,
                 scales: {
-                    y: { beginAtZero: true }
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Number of Complaints' }
+                    },
+                    x: {
+                        title: { display: true, text: 'Date' }
+                    }
+                },
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.raw}`;
+                            }
+                        }
+                    }
                 }
             }
         });
@@ -368,15 +480,31 @@
                 datasets: [{
                     label: 'Complaints by Subcounty',
                     data: locationData.data,
-                    backgroundColor: '#93c5fd',
-                    borderColor: '#3b82f6',
+                    backgroundColor: locationData.labels.map((_, index) => colorPalette[index % colorPalette.length]),
+                    borderColor: colorPalette.map(color => color.replace('0.2', '1')),
                     borderWidth: 1
                 }]
             },
             options: {
                 responsive: true,
                 scales: {
-                    y: { beginAtZero: true }
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Number of Complaints' }
+                    },
+                    x: {
+                        title: { display: true, text: 'Subcounty' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.raw}`;
+                            }
+                        }
+                    }
                 }
             }
         });
@@ -394,15 +522,31 @@
                 datasets: [{
                     label: 'Complaints by Ward',
                     data: wardData.data,
-                    backgroundColor: '#60a5fa',
-                    borderColor: '#2563eb',
+                    backgroundColor: wardData.labels.map((_, index) => colorPalette[index % colorPalette.length]),
+                    borderColor: colorPalette.map(color => color.replace('0.2', '1')),
                     borderWidth: 1
                 }]
             },
             options: {
                 responsive: true,
                 scales: {
-                    y: { beginAtZero: true }
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Number of Complaints' }
+                    },
+                    x: {
+                        title: { display: true, text: 'Ward' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.raw}`;
+                            }
+                        }
+                    }
                 }
             }
         });
@@ -420,15 +564,31 @@
                 datasets: [{
                     label: 'Complaints by Category',
                     data: categoryData.data,
-                    backgroundColor: '#93c5fd',
-                    borderColor: '#3b82f6',
+                    backgroundColor: categoryData.labels.map((_, index) => colorPalette[index % colorPalette.length]),
+                    borderColor: colorPalette.map(color => color.replace('0.2', '1')),
                     borderWidth: 1
                 }]
             },
             options: {
                 responsive: true,
                 scales: {
-                    y: { beginAtZero: true }
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Number of Complaints' }
+                    },
+                    x: {
+                        title: { display: true, text: 'Category' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.raw}`;
+                            }
+                        }
+                    }
                 }
             }
         });
