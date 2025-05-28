@@ -93,6 +93,8 @@ return [
          */
         Yajra\DataTables\DataTablesServiceProvider::class,
         Webklex\IMAP\Providers\LaravelServiceProvider::class, // Corrected service provider
+        Maatwebsite\Excel\ExcelServiceProvider::class,
+        Barryvdh\DomPDF\ServiceProvider::class,
 
         /*
          * Application Service Providers...
@@ -102,6 +104,7 @@ return [
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
+        
     ])->toArray(),
 
     /*
@@ -113,6 +116,8 @@ return [
         // 'Example' => App\Facades\Example::class,
         'DataTables' => Yajra\DataTables\Facades\DataTables::class,
         'IMAP' => Webklex\IMAP\Facades\Client::class, // Corrected facade
+        'Excel' => Maatwebsite\Excel\Facades\Excel::class,
+        'Pdf' => Barryvdh\DomPDF\Facade\Pdf::class,
     ])->toArray(),
 
 ];

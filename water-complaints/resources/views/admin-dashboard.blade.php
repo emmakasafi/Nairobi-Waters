@@ -2,863 +2,436 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- AdminLTE & FontAwesome -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    
+    <title>Nairobi Waters - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
     <style>
-        .filter-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+        body {
+            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+            font-family: 'Poppins', sans-serif;
+            color: #1e293b;
         }
-        
-        .filter-card .card-header {
-            background: transparent;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
-        }
-        
-        .stats-card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        .card {
+            background: linear-gradient(145deg, #ffffff, #f0f9ff);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
-            overflow: hidden;
+            animation: fadeIn 0.5s ease-in-out;
         }
-        
-        .stats-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
         }
-        
-        .chart-card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-            transition: transform 0.2s ease;
+        .sidebar {
+            background: linear-gradient(180deg, #1e40af, #3b82f6);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
         }
-        
-        .chart-card:hover {
-            transform: translateY(-2px);
+        .sidebar a {
+            transition: background-color 0.3s ease, padding-left 0.3s ease;
         }
-        
-        .small-box {
-            border-radius: 15px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0,0.1);
-            transition: all 0.3s ease;
-            overflow: hidden;
-            position: relative;
+        .sidebar a:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding-left: 1.5rem;
         }
-        
-        .small-box::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(45deg, rgba(255,255,255,0.1), transparent);
-            pointer-events: none;
-        }
-        
-        .small-box:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0,0.2);
-        }
-        
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255,255,255,0.9);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            display: none;
-        }
-        
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid #f3f3f3f3;
-            border-top: 5px solid #007bff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .complaint-item {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            padding: 20px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            transition: transform 0.2s ease;
-        }
-        
-        .complaint-item:hover {
-            transform: translateX(5px);
-        }
-        
-        .form-control, .form-select {
-            border-radius: 10px;
-            border: 2px solid #e9ecef;
-            transition: border-color 0.3s ease;
-        }
-        
-        .form-control:focus, .form-select:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-        }
-        
-        .btn {
-            border-radius: 10px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
+            background: linear-gradient(90deg, #2563eb, #4f46e5);
+            color: white;
+            border-radius: 8px;
+            padding: 0.5rem 1.5rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(90deg, #1d4ed8, #4338ca);
         }
-        
-        .content-wrapper {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
+        .btn-secondary {
+            background: linear-gradient(90deg, #6b7280, #4b5563);
+            color: white;
+            border-radius: 8px;
+            padding: 0.5rem 1.5rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        
-        @media (max-width: 768px) {
-            .col-md {
-                margin-bottom: 10px;
-            }
-            
-            .small-box {
-                margin-bottom: 20px;
-            }
-            
-            .chart-card {
-                margin-bottom: 20px;
-            }
+        .btn-secondary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(90deg, #4b5563, #374151);
+        }
+        .table-header {
+            background: linear-gradient(90deg, #e0f2fe, #bae6fd);
+        }
+        table tr {
+            transition: background-color 0.3s ease;
+        }
+        table tr:hover {
+            background-color: #f0f9ff;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
-<body class="hold-transition sidebar-mini layout-fixed">
-<div class="wrapper">
-    <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="spinner"></div>
-    </div>
-
-    <!-- Navbar -->
-    <nav class="main-header navbar navbar-expand navbar-white navbar-light">
-        <ul class="navbar-nav ml-auto">
-            <li class="nav-item">
-                <a class="btn btn-danger" href="#">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </a>
-            </li>
-        </ul>
-    </nav>
-
+<body class="min-h-screen flex">
     <!-- Sidebar -->
-    <aside class="main-sidebar sidebar-dark-primary elevation-4">
-        <a href="#" class="brand-link">
-            <span class="brand-text font-weight-light">Admin Panel</span>
-        </a>
-        <div class="sidebar">
-            <nav class="mt-2">
-                <ul class="nav nav-pills nav-sidebar flex-column" role="menu">
-                    <li class="nav-item">
-                        <a href="#" class="nav-link {{ request()->is('dashboard') ? 'active' : '' }}">
-                            <i class="nav-icon fas fa-tachometer-alt"></i>
-                            <p>Dashboard</p>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->is('admin/users') ? 'active' : '' }}">
-                            <i class="nav-icon fas fa-users"></i>
-                            <p>Users</p>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" class="nav-link {{ request()->is('complaints') ? 'active' : '' }}">
-                            <i class="nav-icon fas fa-comments"></i>
-                            <p>Complaints</p>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" class="nav-link {{ request()->is('reports') ? 'active' : '' }}">
-                            <i class="nav-icon fas fa-chart-line"></i>
-                            <p>Reports</p>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ route('departments.index') }}" class="nav-link {{ request()->is('departments') ? 'active' : '' }}">
-                            <i class="nav-icon fas fa-building"></i>
-                            <p>Departments</p>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" class="nav-link {{ request()->is('settings') ? 'active' : '' }}">
-                            <i class="nav-icon fas fa-cogs"></i>
-                            <p>Settings</p>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
+    <aside class="sidebar w-64 p-6 text-white">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold tracking-tight">Nairobi Waters</h1>
+            <p class="text-sm opacity-80">Admin Dashboard</p>
         </div>
+        <nav>
+            <ul class="space-y-4">
+                <li><a href="{{ route('admin.dashboard') }}" class="block py-2 px-4 rounded hover:bg-blue-700 text-sm font-medium">Dashboard</a></li>
+                <li><a href="{{ route('admin.users.index') }}" class="block py-2 px-4 rounded hover:bg-blue-700 text-sm font-medium">Users</a></li>
+                <li><a href="{{ route('logout') }}" class="block py-2 px-4 rounded hover:bg-blue-700 text-sm font-medium">Logout</a></li>
+            </ul>
+        </nav>
     </aside>
 
-    <!-- Content Wrapper -->
-    <div class="content-wrapper p-4">
-        <section class="content-header">
-            <div class="container-fluid">
-                <div class="row mb-4">
-                    <div class="col-sm-6">
-                        <h1 class="m-0" style="color: #2c3e50; font-weight: 700;">
-                            <i class="fas fa-chart-line text-primary"></i> Analytics Dashboard
-                        </h1>
-                        <p class="text-muted">Real-time water complaints monitoring and analysis</p>
-                    </div>
-                    <div class="col-sm-6">
-                        <ol class="breadcrumb float-sm-right">
-                            <li class="breadcrumb-item"><a href="#">Home</a></li>
-                            <li class="breadcrumb-item active">Dashboard</li>
-                        </ol>
-                    </div>
-                </div>
+    <!-- Main Content -->
+    <main class="flex-1 p-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h2 class="text-4xl font-semibold text-gray-900 tracking-tight">Analytics Dashboard</h2>
+            <p class="text-gray-600 mt-2">Real-time water complaints monitoring and intelligent analysis</p>
+            <nav class="text-sm text-gray-500 mt-2">
+                <a href="{{ route('home') }}" class="hover:text-blue-600">Home</a> / <span>Dashboard</span>
+            </nav>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="card p-6 text-center">
+                <h3 class="text-3xl font-bold text-gray-800">{{ $totalComplaints }}</h3>
+                <p class="text-gray-600 mt-2">Total Complaints</p>
+                <a href="{{ route('water_sentiments') }}" class="text-blue-600 hover:underline text-sm mt-2 block">View Details</a>
             </div>
-        </section>
-
-        <section class="content">
-            <!-- Filter Section -->
-            <div class="card filter-card mb-4">
-                <div class="card-header">
-                    <h3 class="card-title">
-                        <i class="fas fa-filter"></i> Advanced Filters
-                    </h3>
-                    <div class="card-tools">
-                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                            <i class="fas fa-minus"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <form id="filterForm" class="row g-3">
-                        <div class="col-lg-2 col-md-4 col-sm-6">
-                            <label class="form-label">Category</label>
-                            <select class="form-select" name="category" id="categoryFilter">
-                                <option value="">All Categories</option>
-                                @foreach ($categories as $category)
-                                    <option value="{{ $category }}">{{ $category }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-lg-2 col-md-4 col-sm-6">
-                            <label class="form-label">Subcounty</label>
-                            <select class="form-select" name="subcounty" id="subcountyFilter">
-                                <option value="">All Subcounties</option>
-                                @foreach ($subcounties as $subcounty)
-                                    <option value="{{ $subcounty }}">{{ $subcounty }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-lg-2 col-md-4 col-sm-6">
-                            <label class="form-label">Ward</label>
-                            <select class="form-select" name="ward" id="wardFilter">
-                                <option value="">All Wards</option>
-                                @foreach ($wards as $ward)
-                                    <option value="{{ $ward }}">{{ $ward }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-lg-2 col-md-4 col-sm-6">
-                            <label class="form-label">Sentiment</label>
-                            <select class="form-select" name="sentiment" id="sentimentFilter">
-                                <option value="">All Sentiments</option>
-                                @foreach ($sentiments as $sentiment)
-                                    <option value="{{ $sentiment }}">{{ $sentiment }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-lg-2 col-md-4 col-sm-6">
-                            <label class="form-label">Source</label>
-                            <select class="form-select" name="source" id="sourceFilter">
-                                <option value="">All Sources</option>
-                                @foreach ($sources as $source)
-                                    <option value="{{ $source }}">{{ $source }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-lg-2 col-md-4 col-sm-6">
-                            <label class="form-label">Start Date</label>
-                            <input type="date" class="form-control" name="start_date" id="startDateFilter">
-                        </div>
-                        <div class="col-lg-2 col-md-4 col-sm-6">
-                            <label class="form-label">End Date</label>
-                            <input type="date" class="form-control" name="end_date" id="endDateFilter">
-                        </div>
-                        <div class="col-lg-2 col-md-4 col-sm-6 d-flex align-items-end">
-                            <button type="button" class="btn btn-primary w-100" onclick="applyFilters()">
-                                <i class="fas fa-search"></i> Apply
-                            </button>
-                        </div>
-                        <div class="col-lg-2 col-md-4 col-sm-6 d-flex align-items-end">
-                            <button type="button" class="btn btn-secondary w-100" onclick="clearFilters()">
-                                <i class="fas fa-times"></i> Clear
-                            </button>
-                        </div>
-                    </form>
-                </div>
+            <div class="card p-6 text-center">
+                <h3 class="text-3xl font-bold text-green-600">{{ $complaintStatuses->where('status', 'Resolved')->first()->count ?? 0 }}</h3>
+                <p class="text-gray-600 mt-2">Resolved</p>
+                <a href="{{ route('water_sentiments') }}?status=Resolved" class="text-blue-600 hover:underline text-sm mt-2 block">View Details</a>
             </div>
-
-            <!-- Statistics Cards -->
-            <div class="row mb-4">
-                <div class="col-lg-3 col-md-6 col-sm-12">
-                    <div class="small-box bg-info stats-card">
-                        <div class="inner">
-                            <h3 id="totalComplaintsCount">{{ $totalComplaints }}</h3>
-                            <p>Total Complaints</p>
-                        </div>
-                        <div class="icon">
-                            <i class="fas fa-comments"></i>
-                        </div>
-                        <a href="{{ route('water_sentiments') }}" class="small-box-footer">
-                            View All <i class="fas fa-arrow-circle-right"></i>
-                        </a>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 col-sm-12">
-                    <div class="small-box bg-success stats-card">
-                        <div class="inner">
-                            <h3 id="resolvedCount">0</h3>
-                            <p>Resolved</p>
-                        </div>
-                        <div class="icon">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 col-sm-12">
-                    <div class="small-box bg-warning stats-card">
-                        <div class="inner">
-                            <h3 id="pendingCount">0</h3>
-                            <p>Pending</p>
-                        </div>
-                        <div class="icon">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 col-sm-12">
-                    <div class="small-box bg-danger stats-card">
-                        <div class="inner">
-                            <h3 id="criticalCount">0</h3>
-                            <p>Critical</p>
-                        </div>
-                        <div class="icon">
-                            <i class="fas fa-exclamation-triangle"></i>
-                        </div>
-                    </div>
-                </div>
+            <div class="card p-6 text-center">
+                <h3 class="text-3xl font-bold text-yellow-600">{{ $complaintStatuses->where('status', 'Pending')->first()->count ?? 0 }}</h3>
+                <p class="text-gray-600 mt-2">Pending</p>
+                <a href="{{ route('water_sentiments') }}?status=Pending" class="text-blue-600 hover:underline text-sm mt-2 block">View Details</a>
             </div>
-
-            <!-- Charts Row 1 -->
-            <div class="row mb-4">
-                <div class="col-lg-4 col-md-6">
-                    <div class="card chart-card">
-                        <div class="card-header bg-primary text-white">
-                            <h3 class="card-title">
-                                <i class="fas fa-chart-pie"></i> Complaint Status
-                            </h3>
-                        </div>
-                        <div class="card-body">
-                            <canvas id="statusChart" height="200"></canvas>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6">
-                    <div class="card chart-card">
-                        <div class="card-header bg-info text-white">
-                            <h3 class="card-title">
-                                <i class="fas fa-heart"></i> Sentiment Distribution
-                            </h3>
-                        </div>
-                        <div class="card-body">
-                            <canvas id="sentimentChart" height="200"></canvas>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-12">
-                    <div class="card chart-card">
-                        <div class="card-header bg-warning text-white">
-                            <h3 class="card-title">
-                                <i class="fas fa-newspaper"></i> Recent Complaints
-                            </h3>
-                        </div>
-                        <div class="card-body" style="max-height: 400px; overflow-y: auto;">
-                            <div id="recentComplaintsList">
-                                @forelse ($recentComplaints->take(3) as $complaint)
-                                    <div class="complaint-item">
-                                        <h6 class="mb-2">{{ $complaint->processed_caption ?? $complaint->original_caption }}</h6>
-                                        <div class="row text-sm">
-                                            <div class="col-6">
-                                                <p class="mb-1"><i class="fas fa-calendar"></i> {{ $complaint->timestamp ? $complaint->timestamp->format('M d, Y') : 'N/A' }}</p>
-                                                <p class="mb-1"><i class="fas fa-tag"></i> {{ $complaint->complaint_category }}</p>
-                                            </div>
-                                            <div class="col-6">
-                                                <p class="mb-1"><i class="fas fa-map-marker-alt"></i> {{ $complaint->subcounty }}</p>
-                                                <p class="mb-1"><i class="fas fa-smile"></i> {{ $complaint->overall_sentiment }}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                @empty
-                                    <div class="alert alert-info">
-                                        <i class="fas fa-info-circle"></i> No recent complaints found.
-                                    </div>
-                                @endforelse
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="card p-6 text-center">
+                <h3 class="text-3xl font-bold text-red-600">{{ $complaintStatuses->where('status', 'Critical')->first()->count ?? 0 }}</h3>
+                <p class="text-gray-600 mt-2">Critical</p>
+                <a href="{{ route('water_sentiments') }}?status=Critical" class="text-blue-600 hover:underline text-sm mt-2 block">View Details</a>
             </div>
+        </div>
 
-            <!-- Charts Row 2 -->
-            <div class="row mb-4">
-                <div class="col-lg-6 col-md-12">
-                    <div class="card chart-card">
-                        <div class="card-header bg-success text-white">
-                            <h3 class="card-title">
-                                <i class="fas fa-chart-line"></i> Sentiment Trend
-                            </h3>
-                        </div>
-                        <div class="card-body">
-                            <canvas id="sentimentTrendChart"></canvas>
-                        </div>
-                    </div>
+        <!-- Filters -->
+        <div class="card p-6 mb-8">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Advanced Filters</h3>
+            <form method="GET" action="{{ route('admin.dashboard') }}" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                @csrf
+                <div>
+                    <label for="category" class="block text-sm font-medium text-gray-700">Category</label>
+                    <select name="category" id="category" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        <option value="All Categories">All Categories</option>
+                        @foreach ($categories as $category)
+                            <option value="{{ $category }}" {{ request('category') == $category ? 'selected' : '' }}>{{ $category }}</option>
+                        @endforeach
+                    </select>
                 </div>
-                <div class="col-lg-6 col-md-12">
-                    <div class="card chart-card">
-                        <div class="card-header bg-secondary text-white">
-                            <h3 class="card-title">
-                                <i class="fas fa-map"></i> Complaints by Location
-                            </h3>
-                        </div>
-                        <div class="card-body">
-                            <canvas id="complaintsPerSubcountyChart"></canvas>
-                        </div>
-                    </div>
+                <div>
+                    <label for="subcounty" class="block text-sm font-medium text-gray-700">Subcounty</label>
+                    <select name="subcounty" id="subcounty" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        <option value="All Subcounties">All Subcounties</option>
+                        @foreach ($subcounties as $subcounty)
+                            <option value="{{ $subcounty }}" {{ request('subcounty') == $subcounty ? 'selected' : '' }}>{{ $subcounty }}</option>
+                        @endforeach
+                    </select>
                 </div>
+                <div>
+                    <label for="ward" class="block text-sm font-medium text-gray-700">Ward</label>
+                    <select name="ward" id="ward" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        <option value="All Wards">All Wards</option>
+                        @foreach ($wards as $ward)
+                            <option value="{{ $ward }}" {{ request('ward') == $ward ? 'selected' : '' }}>{{ $ward }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label for="sentiment" class="block text-sm font-medium text-gray-700">Sentiment</label>
+                    <select name="sentiment" id="sentiment" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        <option value="All Sentiments">All Sentiments</option>
+                        @foreach ($sentiments as $sentiment)
+                            <option value="{{ $sentiment }}" {{ request('sentiment') == $sentiment ? 'selected' : '' }}>{{ $sentiment }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label for="source" class="block text-sm font-medium text-gray-700">Source</label>
+                    <select name="source" id="source" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        <option value="All Sources">All Sources</option>
+                        @foreach ($sources as $source)
+                            <option value="{{ $source }}" {{ request('source') == $source ? 'selected' : '' }}>{{ $source }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label for="start_date" class="block text-sm font-medium text-gray-700">Start Date</label>
+                    <input type="date" name="start_date" id="start_date" value="{{ request('start_date') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label for="end_date" class="block text-sm font-medium text-gray-700">End Date</label>
+                    <input type="date" name="end_date" id="end_date" value="{{ request('end_date') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="flex space-x-4 items-end">
+                    <button type="submit" class="btn-primary">Apply Filters</button>
+                    <a href="{{ route('admin.dashboard') }}" class="btn-secondary">Clear</a>
+                </div>
+            </form>
+            <div class="mt-4 flex space-x-4">
+                <a href="{{ route('admin.export.csv') }}?{{ http_build_query(request()->query()) }}" class="btn-primary">Export CSV</a>
+                <a href="{{ route('admin.export.excel') }}?{{ http_build_query(request()->query()) }}" class="btn-primary">Export Excel</a>
+                <a href="{{ route('admin.export.pdf') }}?{{ http_build_query(request()->query()) }}" class="btn-primary">Export PDF</a>
             </div>
+        </div>
 
-            <!-- Charts Row 3 -->
-            <div class="row mb-4">
-                <div class="col-lg-6 col-md-12">
-                    <div class="card chart-card">
-                        <div class="card-header bg-dark text-white">
-                            <h3 class="card-title">
-                                <i class="fas fa-home"></i> Complaints by Ward
-                            </h3>
-                        </div>
-                        <div class="card-body">
-                            <canvas id="complaintsPerWardChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-6 col-md-12">
-                    <div class="card chart-card">
-                        <div class="card-header bg-gradient-primary text-white">
-                            <h3 class="card-title">
-                                <i class="fas fa-list"></i> Complaints by Category
-                            </h3>
-                        </div>
-                        <div class="card-body">
-                            <canvas id="complaintsPerCategoryChart"></canvas>
-                        </div>
-                    </div>
-                </div>
+        <!-- Charts -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="card p-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Complaint Status</h3>
+                <canvas id="complaintStatusChart"></canvas>
             </div>
+            <div class="card p-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Sentiment Analysis</h3>
+                <canvas id="sentimentChart"></canvas>
+            </div>
+            <div class="card p-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Sentiment Trends</h3>
+                <canvas id="sentimentTrendChart"></canvas>
+            </div>
+            <div class="card p-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Location Distribution</h3>
+                <canvas id="locationChart"></canvas>
+            </div>
+        </div>
 
-        </section>
-    </div>
+        <!-- Recent Complaints -->
+        <div class="card p-6 mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-gray-800">Recent Complaints</h3>
+                <span class="text-sm text-blue-600 font-medium">Live Updates</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="table-header">
+                            <th class="p-4 font-semibold">Caption</th>
+                            <th class="p-4 font-semibold">Timestamp</th>
+                            <th class="p-4 font-semibold">Category</th>
+                            <th class="p-4 font-semibold">Location</th>
+                            <th class="p-4 font-semibold">Sentiment</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($recentComplaints as $complaint)
+                            <tr class="border-b">
+                                <td class="p-4">{{ $complaint->processed_caption ?? $complaint->original_caption ?? 'N/A' }}</td>
+                                <td class="p-4">{{ $complaint->timestamp ? $complaint->timestamp->format('Y-m-d H:i:s') : 'N/A' }}</td>
+                                <td class="p-4">{{ $complaint->complaint_category ?? 'Unknown' }}</td>
+                                <td class="p-4">{{ $complaint->subcounty ?? 'Unknown' }}</td>
+                                <td class="p-4">{{ $complaint->overall_sentiment ?? 'Unknown' }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="p-4 text-center text-gray-600">No recent complaints found.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-</div>
+        <!-- Additional Charts -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="card p-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Complaints by Ward</h3>
+                <canvas id="wardChart"></canvas>
+            </div>
+            <div class="card p-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Complaints by Category</h3>
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+    </main>
 
-<!-- Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
-<script>
-    let chartInstances = {};
-    
-    const originalData = {
-        sentimentData: @json($sentimentData),
-        sentimentTrendData: @json($sentimentTrendData),
-        complaintsPerSubcounty: @json($complaintsPerSubcounty),
-        complaintsPerWard: @json($complaintsPerWard),
-        complaintsPerCategory: @json($complaintsPerCategory),
-        complaintStatuses: @json($complaintStatuses),
-        recentComplaints: @json($recentComplaints),
-        totalComplaints: {{ $totalComplaints }}
-    };
-
-    const filters = {
-        category: '',
-        subcounty: '',
-        ward: '',
-        sentiment: '',
-        source: '',
-        startDate: null,
-        endDate: null
-    };
-
-    document.addEventListener('DOMContentLoaded', function() {
-        initializeCharts();
-        updateStatistics();
-    });
-
-    function initializeCharts() {
-        createSentimentChart();
-        createSentimentTrendChart();
-        createSubcountyChart();
-        createWardChart();
-        createCategoryChart();
-        createStatusChart();
-    }
-
-    function createSentimentChart() {
-        const ctx = document.getElementById('sentimentChart').getContext('2d');
-        if (chartInstances.sentimentChart) {
-            chartInstances.sentimentChart.destroy();
-        }
-        
-        const data = getFilteredData(originalData.sentimentData);
-        
-        chartInstances.sentimentChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: data.map(item => item.overall_sentiment),
-                datasets: [{
-                    data: data.map(item => item.count),
-                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'],
-                    borderWidth: 0,
-                    hoverOffset: 10
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 20,
-                            usePointStyle: true
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    function createSentimentTrendChart() {
-        const ctx = document.getElementById('sentimentTrendChart').getContext('2d');
-        if (chartInstances.sentimentTrendChart) {
-            chartInstances.sentimentTrendChart.destroy();
-        }
-        
-        const data = getFilteredData(originalData.sentimentTrendData);
-        
-        const datasets = [...new Set(data.map(item => item.overall_sentiment))].map(sentiment => {
-            const color = getColorForSentiment(sentiment);
+    <!-- Chart.js Scripts -->
+    <script>
+        // Helper function to safely get chart data
+        function getChartData(labels, data, defaultLabels = ['No Data'], defaultData = [0]) {
             return {
-                label: sentiment,
-                data: data.map(item => item.overall_sentiment === sentiment ? item.count : 0),
-                borderColor: color,
-                backgroundColor: color + '20',
-                fill: true,
-                tension: 0.4
+                labels: labels && labels.length ? labels : defaultLabels,
+                data: data && data.length ? data : defaultData
             };
-        });
-        
-        chartInstances.sentimentTrendChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: data.map(item => item.date),
-                datasets: datasets
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'top'
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-    }
-
-    function createSubcountyChart() {
-        const ctx = document.getElementById('complaintsPerSubcountyChart').getContext('2d');
-        if (chartInstances.subcountyChart) {
-            chartInstances.subcountyChart.destroy();
         }
-        
-        const data = getFilteredData(originalData.complaintsPerSubcounty);
-        
-        chartInstances.subcountyChart = new Chart(ctx, {
-            type: 'bar',
+
+        // Complaint Status Chart
+        const complaintStatusData = getChartData(
+            @json($complaintStatuses->pluck('status')),
+            @json($complaintStatuses->pluck('count'))
+        );
+        const complaintStatusCtx = document.getElementById('complaintStatusChart').getContext('2d');
+        new Chart(complaintStatusCtx, {
+            type: 'pie',
             data: {
-                labels: data.map(item => item.subcounty),
+                labels: complaintStatusData.labels,
                 datasets: [{
-                    label: 'Complaints',
-                    data: data.map(item => item.count),
-                    backgroundColor: 'rgba(54, 162, 235, 0.8)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1,
-                    borderRadius: 5
+                    data: complaintStatusData.data,
+                    backgroundColor: ['#34d399', '#facc15', '#ef4444'],
+                    borderColor: '#ffffff',
+                    borderWidth: 2
                 }]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
+                    legend: { position: 'top' }
                 }
             }
         });
-    }
 
-    function createWardChart() {
-        const ctx = document.getElementById('complaintsPerWardChart').getContext('2d');
-        if (chartInstances.wardChart) {
-            chartInstances.wardChart.destroy();
-        }
-        
-        const data = getFilteredData(originalData.complaintsPerWard);
-        
-        chartInstances.wardChart = new Chart(ctx, {
+        // Sentiment Analysis Chart
+        const sentimentDataChart = getChartData(
+            @json($sentimentData->pluck('overall_sentiment')),
+            @json($sentimentData->pluck('count'))
+        );
+        const sentimentCtx = document.getElementById('sentimentChart').getContext('2d');
+        new Chart(sentimentCtx, {
             type: 'bar',
             data: {
-                labels: data.map(item => item.ward),
+                labels: sentimentDataChart.labels,
                 datasets: [{
-                    label: 'Complaints',
-                    data: data.map(item => item.count),
-                    backgroundColor: 'rgba(255, 99, 132, 0.8)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
+                    label: 'Sentiment Count',
+                    data: sentimentDataChart.data,
+                    backgroundColor: '#60a5fa',
+                    borderColor: '#2563eb',
                     borderWidth: 1
                 }]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
                 scales: {
-                    y: {
-                        beginAtZero: true
-                    }
+                    y: { beginAtZero: true }
                 }
             }
         });
-    }
 
-    function createCategoryChart() {
-        const ctx = document.getElementById('complaintsPerCategoryChart').getContext('2d');
-        if (chartInstances.categoryChart) {
-            chartInstances.categoryChart.destroy();
-        }
-        
-        const data = getFilteredData(originalData.complaintsPerCategory);
-        
-        chartInstances.categoryChart = new Chart(ctx, {
+        // Sentiment Trends Chart
+        const sentimentTrends = @json($sentimentTrendData);
+        const dates = sentimentTrends && sentimentTrends.length ? [...new Set(sentimentTrends.map(item => item.date))] : ['No Data'];
+        const sentiments = sentimentTrends && sentimentTrends.length ? [...new Set(sentimentTrends.map(item => item.overall_sentiment))] : ['No Data'];
+        const datasets = sentiments.map(sentiment => ({
+            label: sentiment,
+            data: dates.map(date => {
+                const item = sentimentTrends.find(t => t.date === date && t.overall_sentiment === sentiment);
+                return item ? item.count : 0;
+            }),
+            borderColor: sentiment === 'Positive' ? '#34d399' : sentiment === 'Negative' ? '#ef4444' : '#facc15',
+            fill: false
+        }));
+        const sentimentTrendCtx = document.getElementById('sentimentTrendChart').getContext('2d');
+        new Chart(sentimentTrendCtx, {
+            type: 'line',
+            data: {
+                labels: dates,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        // Location Distribution Chart
+        const locationData = getChartData(
+            @json($complaintsPerSubcounty->pluck('subcounty')),
+            @json($complaintsPerSubcounty->pluck('count'))
+        );
+        const locationCtx = document.getElementById('locationChart').getContext('2d');
+        new Chart(locationCtx, {
             type: 'bar',
             data: {
-                labels: data.map(item => item.complaint_category),
+                labels: locationData.labels,
                 datasets: [{
-                    label: 'Complaints',
-                    data: data.map(item => item.count),
-                    backgroundColor: 'rgba(75, 192, 192, 0.8)',
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 1,
-                    borderRadius: 5
+                    label: 'Complaints by Subcounty',
+                    data: locationData.data,
+                    backgroundColor: '#93c5fd',
+                    borderColor: '#3b82f6',
+                    borderWidth: 1
                 }]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
                 scales: {
-                    y: {
-                        beginAtZero: true
-                    }
+                    y: { beginAtZero: true }
                 }
             }
         });
-    }
 
-    function createStatusChart() {
-        const ctx = document.getElementById('statusChart').getContext('2d');
-        if (chartInstances.statusChart) {
-            chartInstances.statusChart.destroy();
-        }
-        
-        const data = getFilteredData(originalData.complaintStatuses);
-        
-        chartInstances.statusChart = new Chart(ctx, {
-            type: 'doughnut',
+        // Complaints by Ward Chart
+        const wardData = getChartData(
+            @json($complaintsPerWard->pluck('ward')),
+            @json($complaintsPerWard->pluck('count'))
+        );
+        const wardCtx = document.getElementById('wardChart').getContext('2d');
+        new Chart(wardCtx, {
+            type: 'bar',
             data: {
-                labels: data.map(item => item.status),
+                labels: wardData.labels,
                 datasets: [{
-                    data: data.map(item => item.count),
-                    backgroundColor: ['#28a745', '#ffc107', '#dc3545', '#6c757d'],
-                    borderWidth: 0,
-                    hoverOffset: 10
+                    label: 'Complaints by Ward',
+                    data: wardData.data,
+                    backgroundColor: '#60a5fa',
+                    borderColor: '#2563eb',
+                    borderWidth: 1
                 }]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 20,
-                            usePointStyle: true
-                        }
-                    }
+                scales: {
+                    y: { beginAtZero: true }
                 }
             }
         });
-    }
 
-    function updateStatistics() {
-        const statusData = originalData.complaintStatuses;
-        const resolvedCount = statusData.find(item => item.status === 'Resolved')?.count || 0;
-        const pendingCount = statusData.find(item => item.status === 'Pending')?.count || 0;
-        const criticalCount = statusData.find(item => item.status === 'Critical')?.count || 0;
-        
-        document.getElementById('resolvedCount').textContent = resolvedCount;
-        document.getElementById('pendingCount').textContent = pendingCount;
-        document.getElementById('criticalCount').textContent = criticalCount;
-    }
-
-    function applyFilters() {
-        filters.category = document.getElementById('categoryFilter').value || '';
-        filters.subcounty = document.getElementById('subcountyFilter').value || '';
-        filters.ward = document.getElementById('wardFilter').value || '';
-        filters.sentiment = document.getElementById('sentimentFilter').value || '';
-        filters.source = document.getElementById('sourceFilter').value || '';
-        filters.startDate = document.getElementById('startDateFilter').value ? new Date(document.getElementById('startDateFilter').value) : null;
-        filters.endDate = document.getElementById('endDateFilter').value ? new Date(document.getElementById('endDateFilter').value) : null;
-
-        updateCharts();
-    }
-
-    function clearFilters() {
-        document.getElementById('categoryFilter').value = '';
-        document.getElementById('subcountyFilter').value = '';
-        document.getElementById('wardFilter').value = '';
-        document.getElementById('sentimentFilter').value = '';
-        document.getElementById('sourceFilter').value = '';
-        document.getElementById('startDateFilter').value = '';
-        document.getElementById('endDateFilter').value = '';
-
-        filters.category = '';
-        filters.subcounty = '';
-        filters.ward = '';
-        filters.sentiment = '';
-        filters.source = '';
-        filters.startDate = null;
-        filters.endDate = null;
-
-        updateCharts();
-    }
-
-    function getFilteredData(data) {
-        let filteredData = [...data];
-
-        if (filters.category) {
-            filteredData = filteredData.filter(item => item.category === filters.category);
-        }
-        if (filters.subcounty) {
-            filteredData = filteredData.filter(item => item.subcounty === filters.subcounty);
-        }
-        if (filters.ward) {
-            filteredData = filteredData.filter(item => item.ward === filters.ward);
-        }
-        if (filters.sentiment) {
-            filteredData = filteredData.filter(item => item.overall_sentiment === filters.sentiment);
-        }
-        if (filters.source) {
-            filteredData = filteredData.filter(item => item.source === filters.source);
-        }
-        if (filters.startDate && filters.endDate) {
-            const startDate = new Date(filters.startDate);
-            const endDate = new Date(filters.endDate);
-            filteredData = filteredData.filter(item => {
-                const date = new Date(item.date);
-                return date >= startDate && date <= endDate;
-            });
-        }
-
-        return filteredData;
-    }
-
-    function updateCharts() {
-        createSentimentChart();
-        createSentimentTrendChart();
-        createSubcountyChart();
-        createWardChart();
-        createCategoryChart();
-        createStatusChart();
-    }
-
-    function getColorForSentiment(sentiment) {
-        const colors = {
-            'Positive': '#28a745',
-            'Neutral': '#ffc107',
-            'Negative': '#dc3545'
-        };
-        return colors[sentiment] || '#6c757d';
-    }
-</script>
+        // Complaints by Category Chart
+        const categoryData = getChartData(
+            @json($complaintsPerCategory->pluck('complaint_category')),
+            @json($complaintsPerCategory->pluck('count'))
+        );
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        new Chart(categoryCtx, {
+            type: 'bar',
+            data: {
+                labels: categoryData.labels,
+                datasets: [{
+                    label: 'Complaints by Category',
+                    data: categoryData.data,
+                    backgroundColor: '#93c5fd',
+                    borderColor: '#3b82f6',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    </script>
 </body>
 </html>

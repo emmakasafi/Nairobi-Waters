@@ -167,6 +167,10 @@ Route::get('/customer/notifications/count', [NotificationController::class, 'get
 // Route to list notifications
 Route::get('/customer/notifications', [NotificationController::class, 'index'])->name('customer.notifications.index');
 
+Route::get('/admin/export/csv', [AdminDashboardController::class, 'exportCsv'])->name('admin.export.csv');
+Route::get('/admin/export/excel', [AdminDashboardController::class, 'exportExcel'])->name('admin.export.excel');
+Route::get('/admin/export/pdf', [AdminDashboardController::class, 'exportPdf'])->name('admin.export.pdf');
+
 
 Route::resource('departments', DepartmentController::class);
 
