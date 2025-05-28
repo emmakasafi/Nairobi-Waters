@@ -5,8 +5,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\Auth\AdminLoginController;
 use App\Http\Controllers\Auth\CustomerLoginController;
-use App\Http\Controllers\Auth\CustomerLogoutController;
 use App\Http\Controllers\CustomerDashboardController;
+use App\Http\Controllers\Auth\CustomerLogoutController;
 use App\Http\Controllers\Auth\OfficerLoginController;
 use App\Http\Controllers\Auth\HodLoginController;
 use App\Http\Controllers\WaterSentimentController;
@@ -23,157 +23,152 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
+// Welcome Route
 Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
-
 
 // Home Route (Authenticated)
 Route::get('/home', function () {
     return view('home');
 })->middleware(['auth'])->name('home');
 
-// Dashboard Route (Authenticated and Verified)
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
-// Admin Login Routes
-Route::get('/admin/login', [AdminLoginController::class, 'showLoginForm'])->name('admin.login');
-Route::post('/admin/login', [AdminLoginController::class, 'login'])->name('admin.login.submit');
-
-// Admin Dashboard Route
-Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->middleware(['auth:admin', 'role:admin'])->name('admin.dashboard');
-
-// Admin Logout Route
-Route::post('/admin/logout', function (Request $request) {
-    Auth::guard('admin')->logout();
-    $request->session()->invalidate();
-    $request->session()->regenerateToken();
-    return redirect('/admin/login');
-})->middleware('auth:admin')->name('admin.logout');
-
-// Customer Login Routes
-Route::get('/customer/login', function () {
-    return view('auth.customer-login');
-})->name('customer.login');
-
-Route::post('/customer/login', [CustomerLoginController::class, 'login'])->name('customer.login.submit');
-
-Route::get('/customer/dashboard', [CustomerDashboardController::class, 'index'])->name('customer.dashboard');
-
-
-// Customer Dashboard Route
-Route::get('/customer/dashboard', function () {
-    return view('customer-dashboard');
-})->middleware(['auth:customer', 'role:user'])->name('customer.dashboard');
-
-// Customer Logout Route
-Route::post('/customer/logout', [CustomerLogoutController::class, 'logout'])->name('customer.logout');
-
-Route::get('/customer/dashboard', [CustomerDashboardController::class, 'index'])->middleware(['auth:customer', 'role:user'])->name('customer.dashboard');
-Route::get('/customer/notifications', [NotificationController::class, 'index'])->name('customer.notifications.index');
-
-// Officer Login Routes
-Route::prefix('officer')->name('officer.')->group(function () {
-    Route::get('login', [OfficerLoginController::class, 'showLoginForm'])->name('login');
-    Route::post('login', [OfficerLoginController::class, 'login']);
-});
-
-
-
-// Profile Routes (Authenticated)
-Route::middleware('auth')->group(function () {
-    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-});
-
-// Dashboard and Complaint Routes (Authenticated)
-Route::middleware('auth')->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/complaints', [ComplaintController::class, 'index'])->name('complaints.index');
-    Route::get('/complaints/create', [ComplaintController::class, 'create'])->name('complaints.create');
-    Route::post('/complaints', [ComplaintController::class, 'store'])->name('complaints.store');
-});
-
 // Registration Routes
 Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
 Route::post('/register', [RegisteredUserController::class, 'store']);
 
-// Water Sentiment Routes
-Route::get('/water_sentiments', [WaterSentimentController::class, 'index'])->name('water_sentiments');
-Route::get('/water_sentiments/{id}', [WaterSentimentController::class, 'show'])->name('water_sentiments.show');
-Route::get('/water_sentiments/{id}/edit', [WaterSentimentController::class, 'edit'])->name('water_sentiments.edit');
-Route::post('/water_sentiments/{id}', [WaterSentimentController::class, 'update'])->name('water_sentiments.update');
-Route::delete('/water_sentiments/{id}', [WaterSentimentController::class, 'destroy'])->name('water_sentiments.destroy');
-Route::get('/search', [WaterSentimentController::class, 'search'])->name('search');
-Route::get('/water_sentiments/data', [WaterSentimentController::class, 'dataTable'])->name('water_sentiments.data');
-Route::post('/water-sentiments/{id}/assign', [WaterSentimentController::class, 'assign'])->name('water_sentiments.assign');
+// Admin Routes
+Route::prefix('admin')->name('admin.')->group(function () {
+    // Admin Login Routes
+    Route::get('login', [AdminLoginController::class, 'showLoginForm'])->name('login');
+    Route::post('login', [AdminLoginController::class, 'login'])->name('login.submit');
 
+    // Admin Authenticated Routes
+    Route::middleware(['auth:admin', 'role:admin'])->group(function () {
+        Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+        Route::post('logout', function () {
+            Auth::guard('admin')->logout();
+            request()->session()->invalidate();
+            request()->session()->regenerateToken();
+            return redirect()->route('admin.login');
+        })->name('logout');
+
+        // User Management
+        Route::get('users', [UserController::class, 'index'])->name('users.index');
+        Route::get('users/{id}', [UserController::class, 'show'])->name('users.show');
+        Route::get('users/{id}/edit', [UserController::class, 'edit'])->name('users.edit');
+        Route::put('users/{id}', [UserController::class, 'update'])->name('users.update');
+        Route::delete('users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
+
+        // Export Routes
+        Route::get('export/csv', [AdminDashboardController::class, 'exportCsv'])->name('export.csv');
+        Route::get('export/excel', [AdminDashboardController::class, 'exportExcel'])->name('export.excel');
+        Route::get('export/pdf', [AdminDashboardController::class, 'exportPdf'])->name('export.pdf');
+
+        // Wards by Subcounty
+        Route::get('wards-by-subcounty', [AdminDashboardController::class, 'getWardsBySubcounty'])->name('wards.by.subcounty');
+
+        // SMS
+        Route::post('receive-sms', [SMSController::class, 'receive'])->name('receive-sms');
+    });
+});
+
+// Customer Routes
+Route::prefix('customer')->name('customer.')->group(function () {
+    // Customer Login Routes
+    Route::get('login', function () {
+        return view('auth.customer-login');
+    })->name('login');
+    Route::post('login', [CustomerLoginController::class, 'login'])->name('login.submit');
+
+    // Customer Authenticated Routes
+    Route::middleware(['auth:customer', 'role:user'])->group(function () {
+        Route::get('dashboard', [CustomerDashboardController::class, 'index'])->name('dashboard');
+        Route::post('logout', [CustomerLogoutController::class, 'logout'])->name('logout');
+
+        // Notification Routes
+        Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::get('notifications/count', [NotificationController::class, 'getNotificationCount'])->name('notifications.count');
+        Route::post('notifications/{notification}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
+        Route::post('notifications/{notification}/respond', [NotificationController::class, 'respond'])->name('notifications.respond');
+    });
+});
+
+// Officer Routes
+Route::prefix('officer')->name('officer.')->group(function () {
+    // Officer Login Routes
+    Route::get('login', [OfficerLoginController::class, 'showLoginForm'])->name('login');
+    Route::post('login', [OfficerLoginController::class, 'login'])->name('login.submit');
+
+    // Officer Authenticated Routes
+    Route::middleware(['auth', 'role:officer'])->group(function () {
+        Route::get('dashboard', [OfficerComplaintController::class, 'index'])->name('officer.index');
+        Route::get('complaints/{complaint}', [OfficerComplaintController::class, 'show'])->name('officer.show');
+        Route::post('complaints/{complaint}/update-status', [OfficerComplaintController::class, 'updateComplaintStatus'])->name('officer.updateStatus');
+        Route::get('complaints/{complaint}/status-options', [OfficerComplaintController::class, 'getAvailableStatusOptions'])->name('officer.getStatusOptions');
+
+        // Officer Resource Routes
+        Route::resource('officer', OfficerController::class)->names([
+            'index' => 'officer.index',
+            'create' => 'officer.create',
+            'store' => 'officer.store',
+            'show' => 'officer.show',
+            'edit' => 'officer.edit',
+            'update' => 'officer.update',
+            'destroy' => 'officer.destroy',
+        ]);
+    });
+});
+
+// HOD Routes
+Route::prefix('hod')->name('hod.')->group(function () {
+    // HOD Login Routes
+    Route::get('login', [HodLoginController::class, 'showLoginForm'])->name('loginForm');
+    Route::post('login', [HodLoginController::class, 'login'])->name('login');
+    
+    // HOD Authenticated Routes
+    Route::middleware(['auth', 'is_hod'])->group(function () {
+        Route::get('/', [HODController::class, 'index'])->name('index');
+        Route::post('assign/{complaintId}', [HODController::class, 'assign'])->name('assign');
+        Route::post('logout', [HodLoginController::class, 'logout'])->name('logout');
+    });
+});
+
+// Authenticated Routes
+Route::middleware('auth')->group(function () {
+    // Profile Routes
+    Route::get('profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Complaint Routes
+    Route::get('complaints', [ComplaintController::class, 'index'])->name('complaints.index');
+    Route::get('complaints/create', [ComplaintController::class, 'create'])->name('complaints.create');
+    Route::post('complaints', [ComplaintController::class, 'store'])->name('complaints.store');
+
+    // Dashboard Route
+    Route::get('dashboard', [DashboardController::class, 'index'])->middleware('verified')->name('dashboard');
+});
+
+// Water Sentiment Routes
+Route::prefix('water_sentiments')->name('water_sentiments.')->group(function () {
+    Route::get('/', [WaterSentimentController::class, 'index'])->name('index');
+    Route::get('{id}', [WaterSentimentController::class, 'show'])->name('show');
+    Route::get('{id}/edit', [WaterSentimentController::class, 'edit'])->name('edit');
+    Route::post('{id}', [WaterSentimentController::class, 'update'])->name('update');
+    Route::delete('{id}', [WaterSentimentController::class, 'destroy'])->name('destroy');
+    Route::post('{id}/assign', [WaterSentimentController::class, 'assign'])->name('assign');
+    Route::get('data', [WaterSentimentController::class, 'dataTable'])->name('data');
+});
+
+// Search Route
+Route::get('search', [WaterSentimentController::class, 'search'])->name('search');
 
 // Nairobi Location Routes
-Route::get('/get-subcounties', [NairobiLocationController::class, 'getSubcounties']);
-Route::get('/get-wards/{subcounty}', [NairobiLocationController::class, 'getWards']);
+Route::get('get-subcounties', [NairobiLocationController::class, 'getSubcounties'])->name('get-subcounties');
+Route::get('get-wards/{subcounty}', [NairobiLocationController::class, 'getWards'])->name('get-wards');
 
+// Department Routes
 Route::resource('departments', DepartmentController::class);
-
-// Admin Routes (Authenticated and Role-based)
-Route::middleware('auth')->prefix('admin')->group(function () {
-    Route::get('/users', [UserController::class, 'index'])->name('admin.users.index');
-    Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('admin.users.edit');
-    Route::put('/users/{id}', [UserController::class, 'update'])->name('admin.users.update');
-    Route::get('/users/{id}', [UserController::class, 'show'])->name('admin.users.show');
-    Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('admin.users.destroy');
-    Route::post('/receive-sms', [SMSController::class, 'receive']);
-});
-
-// Route group for authenticated HODs
-Route::middleware(['auth', 'is_hod'])->group(function () {
-    // Route to view the HOD dashboard (listing unassigned complaints)
-    Route::get('/hod', [HODController::class, 'index'])->name('hod.index');
-
-    // Route to assign a complaint to an officer
-    Route::post('/hod/assign/{complaintId}', [HODController::class, 'assign'])->name('hod.assign');
-});
-
-// Route to show the HOD login form
-Route::get('hod/login', [HodLoginController::class, 'showLoginForm'])->name('hod.loginForm');
-
-// Route to handle the HOD login request
-Route::post('hod/login', [HodLoginController::class, 'login'])->name('hod.login');
-
-// Route to handle the HOD logout
-Route::post('hod/logout', [HodLoginController::class, 'logout'])->name('hod.logout');
-
-
-// For Officer
-Route::middleware(['auth', 'role:officer'])->prefix('officer')->name('officer.')->group(function () {
-    Route::resource('officer', OfficerController::class)->names([
-        'index' => 'officer.index',
-        'create' => 'officer.create',
-        'store' => 'officer.store',
-        'show' => 'officer.show',
-        'edit' => 'officer.edit',
-        'update' => 'officer.update',
-        'destroy' => 'officer.destroy',
-    ]);
-    Route::post('/officer/update-status/{complaint}', [OfficerComplaintController::class, 'updateComplaintStatus'])->name('officer.officer.updateStatus');
-});
-
-// Route to get the notification count
-Route::get('/customer/notifications/count', [NotificationController::class, 'getNotificationCount'])->name('customer.notifications.count');
-
-// Route to list notifications
-Route::get('/customer/notifications', [NotificationController::class, 'index'])->name('customer.notifications.index');
-
-Route::get('/admin/export/csv', [AdminDashboardController::class, 'exportCsv'])->name('admin.export.csv');
-Route::get('/admin/export/excel', [AdminDashboardController::class, 'exportExcel'])->name('admin.export.excel');
-Route::get('/admin/export/pdf', [AdminDashboardController::class, 'exportPdf'])->name('admin.export.pdf');
-
-
-Route::resource('departments', DepartmentController::class);
-
-Route::get('/admin/wards-by-subcounty', [App\Http\Controllers\AdminDashboardController::class, 'getWardsBySubcounty'])->name('admin.wards.by.subcounty');
 
 require __DIR__.'/auth.php';

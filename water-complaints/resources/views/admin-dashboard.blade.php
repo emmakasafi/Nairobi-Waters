@@ -108,22 +108,22 @@
             <div class="card p-6 text-center">
                 <h3 class="text-3xl font-bold text-gray-800">{{ $totalComplaints }}</h3>
                 <p class="text-gray-600 mt-2">Total Complaints</p>
-                <a href="{{ route('water_sentiments') }}" class="text-blue-600 hover:underline text-sm mt-2 block">View Details</a>
+                <a href="{{ route('water_sentiments.index') }}" class="text-blue-600 hover:underline text-sm mt-2 block">View Details</a>
             </div>
             <div class="card p-6 text-center">
                 <h3 class="text-3xl font-bold text-green-600">{{ $complaintStatuses->where('status', 'Resolved')->first()->count ?? 0 }}</h3>
                 <p class="text-gray-600 mt-2">Resolved</p>
-                <a href="{{ route('water_sentiments') }}?status=Resolved" class="text-blue-600 hover:underline text-sm mt-2 block">View Details</a>
+                <a href="{{ route('water_sentiments.index') }}?status=Resolved" class="text-blue-600 hover:underline text-sm mt-2 block">View Details</a>
             </div>
             <div class="card p-6 text-center">
                 <h3 class="text-3xl font-bold text-yellow-600">{{ $complaintStatuses->where('status', 'Pending')->first()->count ?? 0 }}</h3>
                 <p class="text-gray-600 mt-2">Pending</p>
-                <a href="{{ route('water_sentiments') }}?status=Pending" class="text-blue-600 hover:underline text-sm mt-2 block">View Details</a>
+                <a href="{{ route('water_sentiments.index') }}?status=Pending" class="text-blue-600 hover:underline text-sm mt-2 block">View Details</a>
             </div>
             <div class="card p-6 text-center">
                 <h3 class="text-3xl font-bold text-red-600">{{ $complaintStatuses->where('status', 'Critical')->first()->count ?? 0 }}</h3>
                 <p class="text-gray-600 mt-2">Critical</p>
-                <a href="{{ route('water_sentiments') }}?status=Critical" class="text-blue-600 hover:underline text-sm mt-2 block">View Details</a>
+                <a href="{{ route('water_sentiments.index') }}?status=Critical" class="text-blue-600 hover:underline text-sm mt-2 block">View Details</a>
             </div>
         </div>
 
