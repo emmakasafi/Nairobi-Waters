@@ -10,6 +10,7 @@ use App\Http\Controllers\CustomerDashboardController;
 use App\Http\Controllers\Auth\OfficerLoginController;
 use App\Http\Controllers\Auth\HodLoginController;
 use App\Http\Controllers\WaterSentimentController;
+use App\Http\Controllers\Officer\OfficerComplaintController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\NairobiLocationController;
 use App\Http\Controllers\DepartmentController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\HODController;
 use App\Http\Controllers\OfficerController;
 use App\Http\Controllers\SMSController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -70,6 +72,7 @@ Route::get('/customer/dashboard', function () {
 Route::post('/customer/logout', [CustomerLogoutController::class, 'logout'])->name('customer.logout');
 
 Route::get('/customer/dashboard', [CustomerDashboardController::class, 'index'])->middleware(['auth:customer', 'role:user'])->name('customer.dashboard');
+Route::get('/customer/notifications', [NotificationController::class, 'index'])->name('customer.notifications.index');
 
 // Officer Login Routes
 Route::prefix('officer')->name('officer.')->group(function () {
@@ -155,8 +158,15 @@ Route::middleware(['auth', 'role:officer'])->prefix('officer')->name('officer.')
         'update' => 'officer.update',
         'destroy' => 'officer.destroy',
     ]);
-    Route::post('/officer/update-status/{complaint}', [OfficerController::class, 'updateStatus'])->name('officer.updateStatus');
+    Route::post('/officer/update-status/{complaint}', [OfficerComplaintController::class, 'updateComplaintStatus'])->name('officer.officer.updateStatus');
 });
+
+// Route to get the notification count
+Route::get('/customer/notifications/count', [NotificationController::class, 'getNotificationCount'])->name('customer.notifications.count');
+
+// Route to list notifications
+Route::get('/customer/notifications', [NotificationController::class, 'index'])->name('customer.notifications.index');
+
 
 Route::resource('departments', DepartmentController::class);
 

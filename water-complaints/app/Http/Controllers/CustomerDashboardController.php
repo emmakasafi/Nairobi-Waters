@@ -32,6 +32,9 @@ class CustomerDashboardController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
+        // Fetch pending confirmations
+        $pendingConfirmations = $notifications->where('action_required', true);
+
         // Pass the data to the view
         return view('customer-dashboard', compact(
             'waterSentiments',
@@ -39,7 +42,8 @@ class CustomerDashboardController extends Controller
             'pendingComplaints',
             'assignedComplaints',
             'totalComplaints',
-            'notifications'
+            'notifications',
+            'pendingConfirmations'
         ));
     }
 }
