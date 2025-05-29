@@ -20,7 +20,7 @@
                     {{ session('success') }}
                 </div>
                 <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span>&times;</span>
+                    <span>×</span>
                 </button>
             </div>
         @endif
@@ -32,7 +32,7 @@
                     {{ session('error') }}
                 </div>
                 <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span>&times;</span>
+                    <span>×</span>
                 </button>
             </div>
         @endif
@@ -49,16 +49,30 @@
                 @else
                     <ul class="list-group list-group-flush">
                         @foreach($notifications as $notification)
+                            @php
+                                $complaint = $notification->waterSentiment;
+                                $statusUpdate = $complaint ? $complaint->statusUpdates->first() : null;
+                                $complaintId = $notification->complaint_data['water_sentiment_id'] ?? 'Unknown';
+                            @endphp
                             <li class="list-group-item {{ $notification->read_at ? '' : 'bg-light font-weight-bold' }} {{ $notification->type === 'status_confirmation_required' && $notification->action_required ? 'border-left-4 border-warning' : '' }}">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div class="flex-grow-1">
                                         <div class="d-flex align-items-center mb-2">
-                                            <h5 class="mb-0 {{ $notification->read_at ? 'text-muted' : '' }}">{{ $notification->title }}</h5>
+                                            <h5 class="mb-0 {{ $notification->read_at ? 'text-muted' : '' }}">
+                                                <i class="fas fa-file-alt mr-2"></i> Complaint #{{ $complaintId }}
+                                                <span class="badge bg-{{ $statusUpdate && $statusUpdate->new_status === 'resolved' ? 'success' : 'info' }}">
+                                                    {{ ucfirst($statusUpdate->new_status ?? 'Pending') }}
+                                                </span>
+                                            </h5>
                                             @if(!$notification->read_at)
                                                 <span class="badge badge-primary ml-2">New</span>
                                             @endif
                                         </div>
-                                        <p class="mb-2">{{ $notification->message }}</p>
+                                        <p class="mb-2"><strong>Issue:</strong> {{ $complaint->original_caption ?? 'No description available' }}</p>
+                                        <p class="mb-2"><strong>Category:</strong> {{ $complaint->complaint_category ?? 'N/A' }}</p>
+                                        <p class="mb-2"><strong>Location:</strong> {{ $complaint->subcounty ?? 'N/A' }}, {{ $complaint->ward ?? 'N/A' }}</p>
+                                        <p class="mb-2"><strong>Submitted:</strong> {{ $complaint ? $complaint->timestamp->format('M d, Y H:i') : 'N/A' }}</p>
+                                        <p class="mb-2"><strong>Message:</strong> <span class="notification-message">{{ $notification->message }}</span></p>
                                         @if($notification->type === 'status_confirmation_required' && $notification->action_required)
                                             <div class="mt-3">
                                                 <form action="{{ route('customer.notifications.respond', $notification->id) }}" method="POST" class="d-inline">
@@ -73,13 +87,13 @@
                                                 </button>
                                             </div>
                                             <!-- Reject Modal -->
-                                            <div class="modal fade" id="rejectModal{{ $notification->id }}" tabindex="-1" role="dialog" aria-labelledby="rejectModalLabel{{ $notification->id }}" aria-hidden="true">
+                                            <div class="modal fade" id="rejectModal{{ $notification->id }}" tabindex="-1" role="dialog" aria-labelledby="rejectModalLabel{{ $notification->id }}">
                                                 <div class="modal-dialog" role="document">
                                                     <div class="modal-content">
                                                         <div class="modal-header bg-danger text-white">
                                                             <h5 class="modal-title" id="rejectModalLabel{{ $notification->id }}">Reject Status Change</h5>
                                                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                                <span aria-hidden="true">&times;</span>
+                                                                <span>×</span>
                                                             </button>
                                                         </div>
                                                         <form action="{{ route('customer.notifications.respond', $notification->id) }}" method="POST">
@@ -106,9 +120,12 @@
                                     </div>
                                     <div class="ml-3">
                                         @if(!$notification->read_at)
-                                            <a href="{{ route('customer.notifications.markAsRead', $notification->id) }}" class="btn btn-sm btn-outline-primary">
-                                                <i class="fas fa-check mr-1"></i> Mark as Read
-                                            </a>
+                                            <form action="{{ route('customer.notifications.markAsRead', $notification->id) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                <button type="submit" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-check mr-1"></i> Mark as Read
+                                                </button>
+                                            </form>
                                         @endif
                                     </div>
                                 </div>
@@ -145,6 +162,10 @@
         .pagination .page-item.active .page-link {
             background-color: #007bff;
             border-color: #007bff;
+        }
+        .notification-message {
+            color: #2c3e50; /* Dark slate for contrast */
+            font-weight: 500;
         }
     </style>
 @stop

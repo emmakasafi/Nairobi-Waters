@@ -15,7 +15,6 @@
 @stop
 
 @section('content')
-    {{-- Flash Messages --}}
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show">
             <div class="d-flex align-items-center">
@@ -23,7 +22,7 @@
                 {{ session('success') }}
             </div>
             <button type="button" class="close" data-dismiss="alert">
-                <span>&times;</span>
+                <span>×</span>
             </button>
         </div>
     @endif
@@ -35,36 +34,35 @@
                 {{ session('error') }}
             </div>
             <button type="button" class="close" data-dismiss="alert">
-                <span>&times;</span>
+                <span>×</span>
             </button>
         </div>
     @endif
 
-    {{-- Pending Confirmations Alert --}}
-    @if(isset($pendingConfirmations) && $pendingConfirmations > 0)
+    @if($pendingConfirmations > 0)
         <div class="alert alert-warning alert-dismissible fade show">
             <h5><i class="fas fa-exclamation-triangle mr-2"></i> Action Required!</h5>
             You have {{ $pendingConfirmations }} complaint(s) awaiting your confirmation.
             <a href="{{ route('customer.notifications.index') }}" class="alert-link">View Notifications</a>
             <button type="button" class="close" data-dismiss="alert">
-                <span>&times;</span>
+                <span>×</span>
             </button>
         </div>
     @endif
 
-    {{-- Action Buttons --}}
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-        <form method="GET" action="{{ route('complaints.index') }}" class="form-inline mb-2">
+        <form method="GET" action="{{ route('water_sentiments.index') }}" class="form-inline mb-2">
             <label for="status" class="mr-2">Filter by Status:</label>
             <select name="status" id="status" onchange="this.form.submit()" class="form-control">
                 <option value="">-- All --</option>
                 <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
+                <option value="in_progress" {{ request('status') === 'in_progress' ? 'selected' : '' }}>In Progress</option>
                 <option value="resolved" {{ request('status') === 'resolved' ? 'selected' : '' }}>Resolved</option>
-                <option value="assigned" {{ request('status') === 'assigned' ? 'selected' : '' }}>Assigned</option>
+                <option value="closed" {{ request('status') === 'closed' ? 'selected' : '' }}>Closed</option>
             </select>
         </form>
 
-        <form method="GET" action="{{ route('complaints.index') }}" class="form-inline mb-2">
+        <form method="GET" action="{{ route('water_sentiments.index') }}" class="form-inline mb-2">
             <input type="text" name="query" class="form-control mr-2" placeholder="Search complaints..." value="{{ request('query') }}">
             <button type="submit" class="btn btn-info">Search</button>
         </form>
@@ -72,7 +70,7 @@
         <div class="btn-group mb-2">
             <a href="{{ route('customer.notifications.index') }}" class="btn btn-warning">
                 <i class="fas fa-bell mr-1"></i> Notifications
-                @if(isset($pendingConfirmations) && $pendingConfirmations > 0)
+                @if($pendingConfirmations > 0)
                     <span class="badge badge-light">{{ $pendingConfirmations }}</span>
                 @endif
             </a>
@@ -82,7 +80,6 @@
         </div>
     </div>
 
-    {{-- Dashboard Summary Boxes --}}
     <div class="row">
         <div class="col-lg-3 col-6">
             <div class="small-box bg-info">
@@ -118,11 +115,11 @@
             </div>
         </div>
         <div class="col-lg-3 col-6">
-            <a href="{{ route('complaints.index', ['status' => 'assigned']) }}" style="text-decoration: none; color: inherit;">
+            <a href="{{ route('water_sentiments.index', ['status' => 'in_progress']) }}" style="text-decoration: none; color: inherit;">
                 <div class="small-box bg-purple" style="cursor: pointer;">
                     <div class="inner">
                         <h3>{{ $assignedComplaints }}</h3>
-                        <p>Assigned</p>
+                        <p>In Progress</p>
                     </div>
                     <div class="icon">
                         <i class="fas fa-user-shield"></i>
@@ -132,7 +129,6 @@
         </div>
     </div>
 
-    {{-- Filters --}}
     <div class="row mt-4">
         <div class="col-12">
             <div class="card">
@@ -145,8 +141,9 @@
                             <select class="form-control form-control-sm" id="filter_status">
                                 <option value="">All</option>
                                 <option value="Pending">Pending</option>
+                                <option value="In Progress">In Progress</option>
                                 <option value="Resolved">Resolved</option>
-                                <option value="Assigned">Assigned</option>
+                                <option value="Closed">Closed</option>
                                 <option value="Awaiting Confirmation">Awaiting Confirmation</option>
                             </select>
                         </div>
@@ -156,7 +153,6 @@
         </div>
     </div>
 
-    {{-- Recent Complaints with DataTable --}}
     <div class="card mt-4">
         <div class="card-header">
             <h3 class="card-title">Recent Complaints</h3>
@@ -186,8 +182,8 @@
                                             Pending: {{ ucfirst(str_replace('_', ' ', $waterSentiment->pending_status)) }}
                                         </small>
                                     @else
-                                        <span class="badge badge-{{ $waterSentiment->status === 'resolved' ? 'success' : ($waterSentiment->status === 'pending' ? 'warning' : 'info') }}">
-                                            {{ ucfirst($waterSentiment->status) }}
+                                        <span class="badge badge-{{ $waterSentiment->status === 'resolved' ? 'success' : ($waterSentiment->status === 'pending' ? 'warning' : ($waterSentiment->status === 'in_progress' ? 'info' : 'secondary')) }}">
+                                            {{ ucfirst(str_replace('_', ' ', $waterSentiment->status)) }}
                                         </span>
                                     @endif
                                 </td>
@@ -199,7 +195,7 @@
                                             <i class="fas fa-bell mr-1"></i> Confirm
                                         </a>
                                     @else
-                                        <a href="{{ route('complaints.index', $waterSentiment->id) }}" class="btn btn-sm btn-info">
+                                        <a href="{{ route('customer.complaints.show', $waterSentiment->id) }}" class="btn btn-sm btn-info">
                                             <i class="fas fa-eye mr-1"></i> View
                                         </a>
                                     @endif
@@ -236,12 +232,12 @@
                     });
 
                     $('#filter_status').on('change', function () {
-                        table.column(1).search(this.value).draw();
+                        let value = this.value === 'Awaiting Confirmation' ? 'pending_customer_confirmation' : this.value.toLowerCase();
+                        table.column(1).search(value).draw();
                     });
                 }
             });
 
-            // Update notification count
             function updateNotificationCount() {
                 $('#notificationCount').html('<i class="fas fa-spinner fa-spin"></i>').show();
                 $.ajax({
@@ -261,27 +257,14 @@
                 });
             }
 
-            // Initial fetch and periodic update
             updateNotificationCount();
             setInterval(updateNotificationCount, 30000);
 
-            // Auto-dismiss alerts
             setTimeout(function() {
                 $('.alert').fadeOut('slow');
             }, 5000);
-
-            function confirmLogout(event) {
-                event.preventDefault();
-                if (confirm('Are you sure you want to log out?')) {
-                    document.getElementById('logout-form').submit();
-                }
-            }
         });
     </script>
-
-    <form id="logout-form" action="{{ route('customer.logout') }}" method="POST" style="display: none;">
-        @csrf
-    </form>
 @stop
 
 @section('css')
@@ -322,10 +305,6 @@
 
         .table-warning {
             background-color: rgba(255, 193, 7, 0.1) !important;
-        }
-
-        .action-buttons .btn {
-            margin-left: 5px;
         }
 
         @media (max-width: 768px) {

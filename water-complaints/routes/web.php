@@ -86,6 +86,7 @@ Route::prefix('customer')->name('customer.')->group(function () {
         Route::post('/notifications/{notification}/respond', [NotificationController::class, 'respond'])->name('notifications.respond');
         Route::get('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
         Route::get('/notifications/count', [NotificationController::class, 'getNotificationCount'])->name('notifications.count');
+        Route::get('complaints/{id}', [CustomerDashboardController::class, 'show'])->name('complaints.show');
     });
 });
 

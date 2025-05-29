@@ -5,6 +5,7 @@ use App\Http\Controllers\Controller;
 use App\Models\WaterSentiment;
 use App\Models\Notification;
 use App\Models\StatusUpdate;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -84,7 +85,7 @@ class OfficerComplaintController extends Controller
 
             $notificationCreated = false;
             if ($waterSentiment->user_id && in_array($newStatus, ['resolved', 'closed'])) {
-                $notificationCreated = $this->createCustomerNotification($waterSentiment, $newStatus);
+                $notificationCreated = $this->createCustomerNotification($waterSentiment, $newStatus, $statusUpdate->id);
             }
 
             Log::info('Complaint status updated', [
@@ -134,35 +135,52 @@ class OfficerComplaintController extends Controller
         return $options;
     }
 
-    protected function createCustomerNotification(WaterSentiment $complaint, $status)
+    protected function createCustomerNotification(WaterSentiment $complaint, $status, $statusUpdateId)
     {
         if (!$complaint->user_id) {
             Log::error('Cannot create notification: user_id is null', [
                 'water_sentiment_id' => $complaint->id,
                 'status' => $status,
+                'status_update_id' => $statusUpdateId,
+            ]);
+            return false;
+        }
+
+        $user = User::find($complaint->user_id);
+        if (!$user) {
+            Log::error('Cannot create notification: user does not exist', [
+                'water_sentiment_id' => $complaint->id,
+                'user_id' => $complaint->user_id,
+                'status' => $status,
+                'status_update_id' => $statusUpdateId,
             ]);
             return false;
         }
 
         try {
-            $notification = Notification::create([
+            $notificationData = [
                 'user_id' => $complaint->user_id,
                 'type' => 'status_confirmation_required',
                 'title' => 'Complaint Status Update',
                 'message' => "Your complaint #{$complaint->id} has been marked as " . ucfirst($status) . ". Please confirm or reject this status.",
-                'data' => [
+                'data' => json_encode([
                     'water_sentiment_id' => $complaint->id,
                     'status' => $status,
-                ],
+                    'status_update_id' => $statusUpdateId,
+                ]),
                 'action_required' => true,
                 'expires_at' => now()->addDays(7),
-            ]);
+            ];
+
+            $notification = Notification::create($notificationData);
 
             Log::info('Customer notification created successfully', [
                 'notification_id' => $notification->id,
                 'complaint_id' => $complaint->id,
                 'user_id' => $complaint->user_id,
                 'status' => $status,
+                'status_update_id' => $statusUpdateId,
+                'notification_data' => $notificationData,
             ]);
 
             return true;
@@ -171,6 +189,8 @@ class OfficerComplaintController extends Controller
                 'water_sentiment_id' => $complaint->id,
                 'user_id' => $complaint->user_id,
                 'status' => $status,
+                'status_update_id' => $statusUpdateId,
+                'notification_data' => $notificationData,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);

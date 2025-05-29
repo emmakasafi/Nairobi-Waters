@@ -34,6 +34,12 @@ Base = declarative_base()
 Session = sessionmaker(bind=engine)
 session = Session()
 
+# Define the User model for querying
+class User(Base):
+    __tablename__ = 'users'
+    id = Column(Integer, primary_key=True)
+    email = Column(String, unique=True)
+
 # Define the WaterSentiment model
 class WaterSentiment(Base):
     __tablename__ = 'water_sentiments'
@@ -53,14 +59,13 @@ class WaterSentiment(Base):
     status = Column(String)
     entity_type = Column(String)
     entity_name = Column(String)
-    department_id = Column(Integer)  # Add this line
+    department_id = Column(Integer)
 
-# Create the table if it doesn't exist
+# Create tables if they don't exist
 Base.metadata.create_all(engine)
 
 # Load Sentiment Model 
 MODEL_PATH = r"C:\Users\emmah\Downloads\roberta_model-20250213T114406Z-001\roberta_model"
-
 try:
     tokenizer = RobertaTokenizer.from_pretrained(MODEL_PATH)
     model = RobertaForSequenceClassification.from_pretrained(MODEL_PATH)
@@ -109,7 +114,7 @@ CATEGORY_TO_DEPARTMENT = {
     "Sewage and Sanitation": 7,
     "Metering Services": 8,
     "Environmental and Conservation": 9,
-    "ICT and System Access": 9  # Assuming General Inquiry handles ICT and System Access
+    "ICT and System Access": 9
 }
 
 # Text Preprocessing Function
@@ -130,24 +135,18 @@ def analyze_complaint(original_text):
     Returns both the original and processed text along with the department ID.
     """
     processed_text = preprocess_text(original_text)
-
     zero_shot_result = zero_shot_classifier(processed_text, water_categories)
-    predicted_category = zero_shot_result["labels"][0]  
-
+    predicted_category = zero_shot_result["labels"][0]
     inputs = tokenizer(processed_text, return_tensors="pt", truncation=True, padding=True)
     with torch.no_grad():
         outputs = model(**inputs).logits
-
     probabilities = torch.nn.functional.softmax(outputs, dim=1)[0]
     sentiment_labels = ["negative", "neutral", "positive"]
     sentiment = sentiment_labels[torch.argmax(probabilities).item()]
-
-    # Get the department ID based on the predicted category
-    department_id = CATEGORY_TO_DEPARTMENT.get(predicted_category, None)
-
+    department_id = CATEGORY_TO_DEPARTMENT.get(predicted_category, 9)  # Default to General Inquiry
     return {
-        "original_caption": original_text,  
-        "processed_caption": processed_text,  
+        "original_caption": original_text,
+        "processed_caption": processed_text,
         "sentiment": sentiment,
         "category": predicted_category,
         "department_id": department_id
@@ -156,7 +155,6 @@ def analyze_complaint(original_text):
 # Function to reset the auto-increment sequence
 def reset_sequence():
     try:
-        # Get the current session's connection and execute the query
         with engine.connect() as connection:
             connection.execute("""
                 SELECT setval(pg_get_serial_sequence('water_sentiments', 'id'), 
@@ -170,7 +168,7 @@ def reset_sequence():
 def analyze():
     """ API endpoint to analyze complaints. """
     try:
-        data = request.json
+        data = request.form  # Use request.form for form data
         complaint_text = data.get("complaint", "").strip()
         logging.info(f"Received complaint text: {complaint_text}")
 
@@ -180,40 +178,54 @@ def analyze():
 
         result = analyze_complaint(complaint_text)
 
-        # Retrieve user details from the session or authentication context
+        # Retrieve user details
         user_id_raw = data.get('user_id', None)
         user_id = int(user_id_raw) if user_id_raw and str(user_id_raw).isdigit() else None
-        user_name = data.get('user_name', "") 
-        user_email = data.get('user_email', "")  
-        user_phone = data.get("user_phone", "")  # Get user_phone from the request
+        user_email = data.get('user_email', "").strip()
+        user_name = data.get('user_name', "").strip()
+        user_phone = data.get("user_phone", "").strip()
 
-        # Create a new WaterSentiment record (no need to specify 'id')
+        # Validate or fetch user_id from user_email if user_id is missing
+        if not user_id and user_email:
+            user = session.query(User).filter_by(email=user_email).first()
+            if user:
+                user_id = user.id
+                logging.info(f"Fetched user_id {user_id} for email {user_email}")
+            else:
+                logging.warning(f"No user found for email {user_email}")
+                return jsonify({"error": "No user found for provided email"}), 400
+
+        if not user_id:
+            logging.error("No valid user_id provided or found")
+            return jsonify({"error": "User ID is required"}), 400
+
+        # Create WaterSentiment record
         new_record = WaterSentiment(
             original_caption=result["original_caption"],
             processed_caption=result["processed_caption"],
-            timestamp=datetime.now(timezone.utc),  # Use timezone-aware UTC timestamp
+            timestamp=datetime.now(timezone.utc),
             overall_sentiment=result["sentiment"],
             complaint_category=result["category"],
-            source="web_form",  # Assuming the source is a web form
+            source="web_form",
             subcounty=data.get("subcounty", ""),
             ward=data.get("ward", ""),
             user_id=user_id,
             user_name=user_name,
             user_email=user_email,
             user_phone=user_phone,
-            status="pending",  # Assuming the status is pending initially
+            status="pending",
             entity_type=data.get("entity_type", ""),
             entity_name=data.get("entity_name", ""),
-            department_id=result["department_id"]  # Add this line
+            department_id=result["department_id"]
         )
         session.add(new_record)
         session.commit()
 
-        # Reset the sequence after inserting a record
         reset_sequence()
 
         return jsonify(result)
     except Exception as e:
+        session.rollback()
         logging.error(f"Error analyzing complaint: {e}")
         return jsonify({"error": "Internal server error"}), 500
 

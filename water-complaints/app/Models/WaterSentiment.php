@@ -3,6 +3,7 @@ namespace App\Models;
 
 use Laravel\Scout\Searchable;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\User;
 
 class WaterSentiment extends Model
 {
@@ -48,7 +49,7 @@ class WaterSentiment extends Model
             'complaint_category'   => $this->complaint_category,
             'source'               => $this->source,
             'subcounty'            => $this->subcounty,
-            'ward'                 => $this->ward,
+            'ward'               => $this->ward,
             'user_name'            => $this->user_name,
             'user_email'           => $this->user_email,
             'user_phone'           => $this->user_phone,
