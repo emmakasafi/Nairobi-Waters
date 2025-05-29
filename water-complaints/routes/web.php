@@ -59,6 +59,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('export/csv', [AdminDashboardController::class, 'exportCsv'])->name('export.csv');
         Route::get('export/excel', [AdminDashboardController::class, 'exportExcel'])->name('export.excel');
         Route::get('export/pdf', [AdminDashboardController::class, 'exportPdf'])->name('export.pdf');
+        Route::get('/admin/twitter-dashboard', [AdminDashboardController::class, 'twitterDashboard'])->name('twitter.dashboard');
 
         // Wards by Subcounty
         Route::get('wards-by-subcounty', [AdminDashboardController::class, 'getWardsBySubcounty'])->name('wards.by.subcounty');

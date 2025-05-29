@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\WaterSentiment;
+use App\Models\TwitterData;
 use App\Models\User;
 use App\Models\Department;
 use Illuminate\Http\Request;
@@ -15,15 +16,54 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 class AdminDashboardController extends Controller
 {
     /**
-     * Apply filters to WaterSentiment query.
+     * Apply filters to combined WaterSentiment and TwitterData query.
      *
      * @param Request $request
      * @param bool $applyDefaultOrder
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return \Illuminate\Database\Query\Builder
      */
     private function applyFilters(Request $request, $applyDefaultOrder = true)
     {
-        $query = WaterSentiment::query();
+        // Base query for WaterSentiment
+        $waterSentimentQuery = DB::table('water_sentiments')
+            ->select(
+                'original_caption',
+                'processed_caption',
+                'timestamp',
+                'complaint_category',
+                'subcounty',
+                'ward',
+                'overall_sentiment',
+                'source',
+                'status',
+                'user_name',
+                'user_email',
+                'user_phone'
+            );
+
+        // Base query for TwitterData, mapping to the same fields
+        $twitterDataQuery = DB::table('twitter_data')
+            ->select(
+                'original_caption',
+                'processed_caption',
+                'timestamp',
+                'complaint_category',
+                DB::raw('NULL::text as subcounty'),
+                DB::raw('NULL::text as ward'),
+                'overall_sentiment',
+                DB::raw('\'Twitter\'::text as source'),
+                DB::raw('NULL::text as status'),
+                DB::raw('NULL::text as user_name'),
+                DB::raw('NULL::text as user_email'),
+                DB::raw('NULL::text as user_phone')
+            );
+
+        // Combine queries using UNION
+        $query = $waterSentimentQuery->union($twitterDataQuery);
+
+        // Apply filters to the combined query
+        $query = DB::table(DB::raw("({$query->toSql()}) as combined"))
+            ->mergeBindings($query);
 
         if ($applyDefaultOrder) {
             $query->orderBy('timestamp', 'desc');
@@ -51,13 +91,64 @@ class AdminDashboardController extends Controller
         return $query;
     }
 
+    /**
+     * Apply filters to TwitterData query only.
+     *
+     * @param Request $request
+     * @param bool $applyDefaultOrder
+     * @return \Illuminate\Database\Query\Builder
+     */
+    private function applyTwitterFilters(Request $request, $applyDefaultOrder = true)
+    {
+        $query = DB::table('twitter_data')
+            ->select(
+                'original_caption',
+                'processed_caption',
+                'timestamp',
+                'complaint_category',
+                'overall_sentiment',
+                DB::raw('\'Twitter\'::text as source')
+            );
+
+        if ($applyDefaultOrder) {
+            $query->orderBy('timestamp', 'desc');
+        }
+
+        if ($request->has('category') && $request->category && $request->category !== 'All Categories') {
+            $query->where('complaint_category', $request->category);
+        }
+        if ($request->has('sentiment') && $request->sentiment && $request->sentiment !== 'All Sentiments') {
+            $query->where('overall_sentiment', $request->sentiment);
+        }
+        if ($request->has('start_date') && $request->has('end_date') && $request->start_date && $request->end_date) {
+            $query->whereBetween('timestamp', [$request->start_date, $request->end_date]);
+        }
+
+        return $query;
+    }
+
     public function index(Request $request)
     {
         // Apply filters to the base query with default timestamp ordering
         $filteredQuery = $this->applyFilters($request);
 
         // Fetch recent complaints (top 3, explicitly ordered by timestamp desc)
-        $recentComplaints = $filteredQuery->orderBy('timestamp', 'desc')->take(3)->get();
+        $recentComplaints = $filteredQuery->orderBy('timestamp', 'desc')->take(3)->get()->map(function ($item) {
+            return (object) [
+                'original_caption' => htmlspecialchars($item->original_caption ?? 'N/A', ENT_QUOTES, 'UTF-8'),
+                'processed_caption' => htmlspecialchars($item->processed_caption ?? 'N/A', ENT_QUOTES, 'UTF-8'),
+                'timestamp' => $item->timestamp ? \Carbon\Carbon::parse($item->timestamp) : null,
+                'complaint_category' => htmlspecialchars($item->complaint_category ?? 'Unknown', ENT_QUOTES, 'UTF-8'),
+                'subcounty' => htmlspecialchars($item->subcounty ?? 'Unknown', ENT_QUOTES, 'UTF-8'),
+                'ward' => htmlspecialchars($item->ward ?? 'Unknown', ENT_QUOTES, 'UTF-8'),
+                'overall_sentiment' => htmlspecialchars($item->overall_sentiment ?? 'Unknown', ENT_QUOTES, 'UTF-8'),
+                'source' => htmlspecialchars($item->source ?? 'Unknown', ENT_QUOTES, 'UTF-8'),
+                'status' => htmlspecialchars($item->status ?? 'Unknown', ENT_QUOTES, 'UTF-8'),
+                'user_name' => htmlspecialchars($item->user_name ?? 'N/A', ENT_QUOTES, 'UTF-8'),
+                'user_email' => htmlspecialchars($item->user_email ?? 'N/A', ENT_QUOTES, 'UTF-8'),
+                'user_phone' => htmlspecialchars($item->user_phone ?? 'N/A', ENT_QUOTES, 'UTF-8'),
+            ];
+        });
 
         // Total number of complaints with filters
         $totalComplaints = $filteredQuery->count();
@@ -142,25 +233,63 @@ class AdminDashboardController extends Controller
             });
 
         // Fetch unique values for filters with sanitization
-        $categories = WaterSentiment::select('complaint_category')->distinct()->get()->pluck('complaint_category')->filter()->map(function ($category) {
-            return htmlspecialchars($category, ENT_QUOTES, 'UTF-8');
-        })->values();
+        $categories = $this->applyFilters($request, false)
+            ->select('complaint_category')
+            ->distinct()
+            ->get()
+            ->pluck('complaint_category')
+            ->filter()
+            ->map(function ($category) {
+                return htmlspecialchars($category, ENT_QUOTES, 'UTF-8');
+            })->values();
 
-        $subcounties = WaterSentiment::select('subcounty')->distinct()->get()->pluck('subcounty')->filter()->map(function ($subcounty) {
-            return htmlspecialchars($subcounty, ENT_QUOTES, 'UTF-8');
-        })->values();
+        $subcounties = $this->applyFilters($request, false)
+            ->select('subcounty')
+            ->distinct()
+            ->get()
+            ->pluck('subcounty')
+            ->filter()
+            ->map(function ($subcounty) {
+                return htmlspecialchars($subcounty, ENT_QUOTES, 'UTF-8');
+            })->values();
 
-        $wards = WaterSentiment::select('ward')->distinct()->get()->pluck('ward')->filter()->map(function ($ward) {
-            return htmlspecialchars($ward, ENT_QUOTES, 'UTF-8');
-        })->values();
+        $wards = $this->applyFilters($request, false)
+            ->select('ward')
+            ->distinct()
+            ->get()
+            ->pluck('ward')
+            ->filter()
+            ->map(function ($ward) {
+                return htmlspecialchars($ward, ENT_QUOTES, 'UTF-8');
+            })->values();
 
-        $sentiments = WaterSentiment::select('overall_sentiment')->distinct()->get()->pluck('overall_sentiment')->filter()->map(function ($sentiment) {
-            return htmlspecialchars($sentiment, ENT_QUOTES, 'UTF-8');
-        })->values();
+        $sentiments = $this->applyFilters($request, false)
+            ->select('overall_sentiment')
+            ->distinct()
+            ->get()
+            ->pluck('overall_sentiment')
+            ->filter()
+            ->map(function ($sentiment) {
+                return htmlspecialchars($sentiment, ENT_QUOTES, 'UTF-8');
+            })->values();
 
-        $sources = WaterSentiment::select('source')->distinct()->get()->pluck('source')->filter()->map(function ($source) {
-            return htmlspecialchars($source, ENT_QUOTES, 'UTF-8');
-        })->values();
+        $sources = $this->applyFilters($request, false)
+            ->select('source')
+            ->distinct()
+            ->get()
+            ->pluck('source')
+            ->filter()
+            ->map(function ($source) {
+                return htmlspecialchars($source, ENT_QUOTES, 'UTF-8');
+            })->values();
+
+        // Fetch source counts for sourceChart
+        $sourceCounts = $this->applyFilters($request, false)
+            ->select('source', DB::raw('COUNT(*) as count'))
+            ->groupBy('source')
+            ->orderBy('count', 'desc')
+            ->get()
+            ->pluck('count');
 
         // Fetch departments
         $departments = Department::all();
@@ -185,7 +314,106 @@ class AdminDashboardController extends Controller
             'sentiments',
             'sources',
             'complaintStatuses',
-            'departments'
+            'departments',
+            'sourceCounts'
+        ));
+    }
+
+    /**
+     * Display Twitter Data Dashboard.
+     *
+     * @param Request $request
+     * @return \Illuminate\View\View
+     */
+    public function twitterDashboard(Request $request)
+    {
+        // Apply filters to Twitter data
+        $filteredQuery = $this->applyTwitterFilters($request);
+
+        // Fetch recent Twitter complaints (top 5)
+        $recentComplaints = $filteredQuery->orderBy('timestamp', 'desc')->take(5)->get()->map(function ($item) {
+            return (object) [
+                'original_caption' => htmlspecialchars($item->original_caption ?? 'N/A', ENT_QUOTES, 'UTF-8'),
+                'processed_caption' => htmlspecialchars($item->processed_caption ?? 'N/A', ENT_QUOTES, 'UTF-8'),
+                'timestamp' => $item->timestamp ? \Carbon\Carbon::parse($item->timestamp) : null,
+                'complaint_category' => htmlspecialchars($item->complaint_category ?? 'Unknown', ENT_QUOTES, 'UTF-8'),
+                'overall_sentiment' => htmlspecialchars($item->overall_sentiment ?? 'Unknown', ENT_QUOTES, 'UTF-8'),
+                'source' => htmlspecialchars($item->source ?? 'Twitter', ENT_QUOTES, 'UTF-8'),
+            ];
+        });
+
+        // Total number of Twitter complaints
+        $totalComplaints = $filteredQuery->count();
+
+        // Sentiment data
+        $sentimentData = $this->applyTwitterFilters($request, false)
+            ->select('overall_sentiment', DB::raw('COUNT(*) as count'))
+            ->groupBy('overall_sentiment')
+            ->orderBy('count', 'desc')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'overall_sentiment' => htmlspecialchars($item->overall_sentiment ?? 'Unknown', ENT_QUOTES, 'UTF-8'),
+                    'count' => (int) $item->count
+                ];
+            });
+
+        // Sentiment trend data
+        $sentimentTrendData = $this->applyTwitterFilters($request, false)
+            ->select(DB::raw('DATE(timestamp) as date'), DB::raw('COUNT(*) as count'), 'overall_sentiment')
+            ->groupBy('date', 'overall_sentiment')
+            ->orderBy('date')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'date' => $item->date ?? 'Unknown',
+                    'overall_sentiment' => htmlspecialchars($item->overall_sentiment ?? 'Unknown', ENT_QUOTES, 'UTF-8'),
+                    'count' => (int) $item->count
+                ];
+            });
+
+        // Complaints per category
+        $complaintsPerCategory = $this->applyTwitterFilters($request, false)
+            ->select('complaint_category', DB::raw('COUNT(*) as count'))
+            ->groupBy('complaint_category')
+            ->orderBy('count', 'desc')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'complaint_category' => htmlspecialchars($item->complaint_category ?? 'Unknown', ENT_QUOTES, 'UTF-8'),
+                    'count' => (int) $item->count
+                ];
+            });
+
+        // Fetch unique values for filters
+        $categories = $this->applyTwitterFilters($request, false)
+            ->select('complaint_category')
+            ->distinct()
+            ->get()
+            ->pluck('complaint_category')
+            ->filter()
+            ->map(function ($category) {
+                return htmlspecialchars($category, ENT_QUOTES, 'UTF-8');
+            })->values();
+
+        $sentiments = $this->applyTwitterFilters($request, false)
+            ->select('overall_sentiment')
+            ->distinct()
+            ->get()
+            ->pluck('overall_sentiment')
+            ->filter()
+            ->map(function ($sentiment) {
+                return htmlspecialchars($sentiment, ENT_QUOTES, 'UTF-8');
+            })->values();
+
+        return view('admin.twitter-dashboard', compact(
+            'recentComplaints',
+            'totalComplaints',
+            'sentimentData',
+            'sentimentTrendData',
+            'complaintsPerCategory',
+            'categories',
+            'sentiments'
         ));
     }
 
@@ -199,26 +427,20 @@ class AdminDashboardController extends Controller
     {
         $subcounty = $request->query('subcounty');
 
+        $wardsQuery = $this->applyFilters($request, false)
+            ->select('ward')
+            ->distinct();
+
         if ($subcounty && $subcounty !== 'All Subcounties') {
-            $wards = WaterSentiment::where('subcounty', $subcounty)
-                ->select('ward')
-                ->distinct()
-                ->get()
-                ->pluck('ward')
-                ->filter()
-                ->map(function ($ward) {
-                    return htmlspecialchars($ward, ENT_QUOTES, 'UTF-8');
-                })->values();
-        } else {
-            $wards = WaterSentiment::select('ward')
-                ->distinct()
-                ->get()
-                ->pluck('ward')
-                ->filter()
-                ->map(function ($ward) {
-                    return htmlspecialchars($ward, ENT_QUOTES, 'UTF-8');
-                })->values();
+            $wardsQuery->where('subcounty', $subcounty);
         }
+
+        $wards = $wardsQuery->get()
+            ->pluck('ward')
+            ->filter()
+            ->map(function ($ward) {
+                return htmlspecialchars($ward, ENT_QUOTES, 'UTF-8');
+            })->values();
 
         return response()->json($wards);
     }
@@ -226,20 +448,7 @@ class AdminDashboardController extends Controller
     public function exportCsv(Request $request)
     {
         $query = $this->applyFilters($request);
-        $data = $query->orderBy('timestamp', 'desc')->get([
-            'original_caption',
-            'processed_caption',
-            'timestamp',
-            'complaint_category',
-            'subcounty',
-            'ward',
-            'overall_sentiment',
-            'source',
-            'status',
-            'user_name',
-            'user_email',
-            'user_phone'
-        ]);
+        $data = $query->orderBy('timestamp', 'desc')->get();
 
         $filename = 'complaints_' . now()->format('Ymd_His') . '.csv';
         return response()->streamDownload(function () use ($data) {
@@ -263,7 +472,7 @@ class AdminDashboardController extends Controller
                 fputcsv($handle, [
                     $row->original_caption ?? 'N/A',
                     $row->processed_caption ?? 'N/A',
-                    $row->timestamp ? $row->timestamp->format('Y-m-d H:i:s') : 'N/A',
+                    $row->timestamp ? \Carbon\Carbon::parse($row->timestamp)->format('Y-m-d H:i:s') : 'N/A',
                     $row->complaint_category ?? 'Unknown',
                     $row->subcounty ?? 'Unknown',
                     $row->ward ?? 'Unknown',
@@ -294,45 +503,12 @@ class AdminDashboardController extends Controller
 
             public function collection()
             {
-                $query = WaterSentiment::query();
-
-                if ($this->request->has('category') && $this->request->category && $this->request->category !== 'All Categories') {
-                    $query->where('complaint_category', $this->request->category);
-                }
-                if ($this->request->has('subcounty') && $this->request->subcounty && $this->request->subcounty !== 'All Subcounties') {
-                    $query->where('subcounty', $this->request->subcounty);
-                }
-                if ($this->request->has('ward') && $this->request->ward && $this->request->ward !== 'All Wards') {
-                    $query->where('ward', $this->request->ward);
-                }
-                if ($this->request->has('sentiment') && $this->request->sentiment && $this->request->sentiment !== 'All Sentiments') {
-                    $query->where('overall_sentiment', $this->request->sentiment);
-                }
-                if ($this->request->has('source') && $this->request->source && $this->request->source !== 'All Sources') {
-                    $query->where('source', $this->request->source);
-                }
-                if ($this->request->has('start_date') && $this->request->has('end_date') && $this->request->start_date && $this->request->end_date) {
-                    $query->whereBetween('timestamp', [$this->request->start_date, $this->request->end_date]);
-                }
-
-                return $query->orderBy('timestamp', 'desc')->get([
-                    'original_caption',
-                    'processed_caption',
-                    'timestamp',
-                    'complaint_category',
-                    'subcounty',
-                    'ward',
-                    'overall_sentiment',
-                    'source',
-                    'status',
-                    'user_name',
-                    'user_email',
-                    'user_phone'
-                ])->map(function ($row) {
+                $query = app(\App\Http\Controllers\AdminDashboardController::class)->applyFilters($this->request);
+                return $query->orderBy('timestamp', 'desc')->get()->map(function ($row) {
                     return [
                         'Caption' => $row->original_caption ?? 'N/A',
                         'Processed Caption' => $row->processed_caption ?? 'N/A',
-                        'Date' => $row->timestamp ? $row->timestamp->format('Y-m-d H:i:s') : 'N/A',
+                        'Date' => $row->timestamp ? \Carbon\Carbon::parse($row->timestamp)->format('Y-m-d H:i:s') : 'N/A',
                         'Category' => $row->complaint_category ?? 'Unknown',
                         'Subcounty' => $row->subcounty ?? 'Unknown',
                         'Ward' => $row->ward ?? 'Unknown',
@@ -369,20 +545,22 @@ class AdminDashboardController extends Controller
     public function exportPdf(Request $request)
     {
         $query = $this->applyFilters($request);
-        $complaints = $query->orderBy('timestamp', 'desc')->get([
-            'original_caption',
-            'processed_caption',
-            'timestamp',
-            'complaint_category',
-            'subcounty',
-            'ward',
-            'overall_sentiment',
-            'source',
-            'status',
-            'user_name',
-            'user_email',
-            'user_phone'
-        ]);
+        $complaints = $query->orderBy('timestamp', 'desc')->get()->map(function ($item) {
+            return (object) [
+                'original_caption' => htmlspecialchars($item->original_caption ?? 'N/A', ENT_QUOTES, 'UTF-8'),
+                'processed_caption' => htmlspecialchars($item->processed_caption ?? 'N/A', ENT_QUOTES, 'UTF-8'),
+                'timestamp' => $item->timestamp ? \Carbon\Carbon::parse($item->timestamp) : null,
+                'complaint_category' => htmlspecialchars($item->complaint_category ?? 'Unknown', ENT_QUOTES, 'UTF-8'),
+                'subcounty' => htmlspecialchars($item->subcounty ?? 'Unknown', ENT_QUOTES, 'UTF-8'),
+                'ward' => htmlspecialchars($item->ward ?? 'Unknown', ENT_QUOTES, 'UTF-8'),
+                'overall_sentiment' => htmlspecialchars($item->overall_sentiment ?? 'Unknown', ENT_QUOTES, 'UTF-8'),
+                'source' => htmlspecialchars($item->source ?? 'Unknown', ENT_QUOTES, 'UTF-8'),
+                'status' => htmlspecialchars($item->status ?? 'Unknown', ENT_QUOTES, 'UTF-8'),
+                'user_name' => htmlspecialchars($item->user_name ?? 'N/A', ENT_QUOTES, 'UTF-8'),
+                'user_email' => htmlspecialchars($item->user_email ?? 'N/A', ENT_QUOTES, 'UTF-8'),
+                'user_phone' => htmlspecialchars($item->user_phone ?? 'N/A', ENT_QUOTES, 'UTF-8'),
+            ];
+        });
 
         $pdf = Pdf::loadView('exports.complaints-pdf', compact('complaints'));
         return $pdf->download('complaints_' . now()->format('Ymd_His') . '.pdf');
