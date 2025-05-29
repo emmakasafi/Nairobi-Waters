@@ -11,10 +11,22 @@ class StatusUpdate extends Model
         'old_status',
         'new_status',
         'officer_notes',
+        'requires_customer_confirmation',
         'status',
+        'customer_confirmed_at',
+        'customer_rejection_reason',
+        'customer_responded_at',
         'rejection_reason',
         'created_at',
         'updated_at',
+    ];
+
+    protected $casts = [
+        'requires_customer_confirmation' => 'boolean',
+        'customer_confirmed_at' => 'datetime',
+        'customer_responded_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     public function waterSentiment()

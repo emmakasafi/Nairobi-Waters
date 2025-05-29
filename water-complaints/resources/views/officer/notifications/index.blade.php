@@ -81,7 +81,7 @@
                                                                 <span>×</span>
                                                             </button>
                                                         </div>
-                                                        <form action="{{ route('officer.notifications.respond', $notification->id) }}" method="POST">
+                                                        <form action="{{ route('officer.officer.notifications.respond', $notification->id) }}" method="POST">
                                                             @csrf
                                                             <div class="modal-body">
                                                                 <div class="form-group">
@@ -112,7 +112,7 @@
                                     </div>
                                     <div class="ml-3">
                                         @if(!$notification->read_at)
-                                            <form action="{{ route('officer.notifications.markAsRead', $notification->id) }}" method="POST" class="d-inline">
+                                            <form action="{{ route('officer.officer.notifications.markAsRead', $notification->id) }}" method="POST" class="d-inline">
                                                 @csrf
                                                 <button type="submit" class="btn btn-sm btn-outline-primary">
                                                     <i class="fas fa-check mr-1"></i> Mark as Read

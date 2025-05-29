@@ -99,9 +99,12 @@ class NotificationController extends Controller
                 throw new \Exception('Status update is not for resolved or closed.');
             }
 
-            $statusUpdate->update(['status' => 'confirmed']);
+            $statusUpdate->update([
+                'status' => 'confirmed',
+                'customer_confirmed_at' => now(),
+                'customer_responded_at' => now(),
+            ]);
 
-            // Only set timestamps if columns exist
             if (Schema::hasColumn('water_sentiments', 'resolved_at')) {
                 $updateData['resolved_at'] = $statusUpdate->new_status === 'resolved' ? now() : $waterSentiment->resolved_at;
             }
@@ -117,11 +120,11 @@ class NotificationController extends Controller
                 : "Your complaint is now closed.";
             $officerMessage = "Customer confirmed the {$statusUpdate->new_status} status for complaint #{$waterSentiment->id}.";
         } else {
-            $statusUpdateData = ['status' => 'rejected'];
-            if (Schema::hasColumn('status_updates', 'rejection_reason')) {
-                $statusUpdateData['rejection_reason'] = $request->rejection_reason;
-            }
-            $statusUpdate->update($statusUpdateData);
+            $statusUpdate->update([
+                'status' => 'rejected',
+                'customer_rejection_reason' => $request->rejection_reason,
+                'customer_responded_at' => now(),
+            ]);
 
             $waterSentiment->update($updateData);
 
@@ -144,6 +147,7 @@ class NotificationController extends Controller
                 'water_sentiment_id' => $waterSentiment->id,
                 'original_notification_id' => $notification->id,
                 'response' => $request->response,
+                'rejection_reason' => $request->rejection_reason ?? null,
             ],
             'action_required' => false,
             'expires_at' => now()->addDays(7),

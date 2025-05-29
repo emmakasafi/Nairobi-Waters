@@ -3,10 +3,10 @@
 namespace App\Console\Commands;
 
 use App\Models\Notification;
+use App\Models\StatusUpdate;
 use App\Models\WaterSentiment;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
 
 class BackfillOfficerNotifications extends Command
 {
@@ -17,82 +17,67 @@ class BackfillOfficerNotifications extends Command
     {
         $this->info('Starting backfill of officer notifications...');
 
-        $query = Notification::where('type', 'response_acknowledgement')->whereNotNull('data');
+        $query = StatusUpdate::whereIn('status', ['confirmed', 'rejected'])
+            ->whereNotNull('customer_responded_at');
 
         if ($userId = $this->option('user_id')) {
             $this->info("Backfilling for officer user_id: $userId");
-            $complaintIds = WaterSentiment::where('assigned_to', $userId)->pluck('id')->toArray();
-            $query->where(function ($q) use ($complaintIds) {
-                foreach ($complaintIds as $id) {
-                    $q->orWhereJsonContains('data->water_sentiment_id', $id);
-                }
+            $query->whereHas('waterSentiment', function ($q) use ($userId) {
+                $q->where('assigned_to', $userId);
             });
         }
 
-        $responses = $query->get();
+        $statusUpdates = $query->get();
 
-        if ($responses->isEmpty()) {
-            $this->error('No customer response_acknowledgement notifications found.');
+        if ($statusUpdates->isEmpty()) {
+            $this->error('No customer responses found in status_updates.');
             return;
         }
 
         $created = 0;
         $skipped = 0;
 
-        foreach ($responses as $response) {
+        foreach ($statusUpdates as $statusUpdate) {
             try {
-                $data = is_array($response->data) ? $response->data : json_decode($response->data, true);
-
-                if (!isset($data['water_sentiment_id']) || !isset($data['response'])) {
-                    $this->error('Invalid response data');
-                    Log::warning('Skipping response: missing required fields', [
-                        'response_id' => $response->id,
-                        'data' => $response->data
-                    ]);
-                    $skipped++;
-                    continue;
-                }
-
-                $complaint = WaterSentiment::find($data['water_sentiment_id']);
+                $complaint = $statusUpdate->waterSentiment;
 
                 if (!$complaint) {
-                    Log::warning('Skipping response: complaint not found', [
-                        'notification_id' => $response->id,
-                        'water_sentiment_id' => $data['water_sentiment_id']
+                    Log::warning('Skipping status update: complaint not found', [
+                        'status_update_id' => $statusUpdate->id,
+                        'water_sentiment_id' => $statusUpdate->water_sentiment_id,
                     ]);
                     $skipped++;
                     continue;
                 }
 
                 if (!$complaint->assigned_to) {
-                    Log::warning('Skipping response: no officer assigned', [
-                        'notification_id' => $response->id,
-                        'water_sentiment_id' => $data['water_sentiment_id']
+                    Log::warning('Skipping status update: no officer assigned', [
+                        'status_update_id' => $statusUpdate->id,
+                        'water_sentiment_id' => $statusUpdate->water_sentiment_id,
                     ]);
                     $skipped++;
                     continue;
                 }
 
-                // Check for duplicate notification
                 $existing = Notification::where('user_id', $complaint->assigned_to)
                     ->where('type', 'customer_response')
-                    ->where('data->water_sentiment_id', $data['water_sentiment_id'])
-                    ->where('data->response', $data['response'])
+                    ->where('data->water_sentiment_id', $complaint->id)
+                    ->where('data->response', $statusUpdate->status)
                     ->exists();
 
                 if ($existing) {
                     Log::info('Notification already exists', [
                         'officer_id' => $complaint->assigned_to,
-                        'water_sentiment_id' => $data['water_sentiment_id'],
-                        'response' => $data['response']
+                        'water_sentiment_id' => $complaint->id,
+                        'response' => $statusUpdate->status,
                     ]);
                     $skipped++;
                     continue;
                 }
 
-                $officerMessage = $data['response'] === 'confirmed'
-                    ? "Customer confirmed the " . (isset($data['status']) ? $data['status'] : 'unknown') . " status for complaint #{$complaint->id}."
-                    : "Customer rejected the " . (isset($data['status']) ? $data['status'] : 'unknown') . " status for complaint #{$complaint->id}. Reason: " . (isset($data['rejection_reason']) ? $data['rejection_reason'] : 'No reason provided');
+                $officerMessage = $statusUpdate->status === 'confirmed'
+                    ? "Customer confirmed the {$statusUpdate->new_status} status for complaint #{$complaint->id}."
+                    : "Customer rejected the {$statusUpdate->new_status} status for complaint #{$complaint->id}. Reason: " . ($statusUpdate->customer_rejection_reason ?? 'No reason provided');
 
                 Notification::create([
                     'user_id' => $complaint->assigned_to,
@@ -100,28 +85,27 @@ class BackfillOfficerNotifications extends Command
                     'title' => 'Customer Response for Complaint #' . $complaint->id,
                     'message' => $officerMessage,
                     'data' => [
-                        'water_sentiment_id' => $data['water_sentiment_id'],
-                        'customer_notification_id' => $response->id,
-                        'response' => $data['response'],
-                        'rejection_reason' => isset($data['rejection_reason']) ? $data['rejection_reason'] : null,
+                        'water_sentiment_id' => $complaint->id,
+                        'status_update_id' => $statusUpdate->id,
+                        'response' => $statusUpdate->status,
+                        'rejection_reason' => $statusUpdate->customer_rejection_reason ?? null,
                     ],
-                    'action_required' => $data['response'] === 'rejected',
+                    'action_required' => $statusUpdate->status === 'rejected',
                     'expires_at' => now()->addDays(7),
-                    'created_at' => $response->created_at,
-                    'updated_at' => $response->created_at,
+                    'created_at' => $statusUpdate->customer_responded_at,
+                    'updated_at' => $statusUpdate->customer_responded_at,
                 ]);
 
                 Log::info('Created notification for officer', [
                     'officer_id' => $complaint->assigned_to,
-                    'water_sentiment_id' => $data['water_sentiment_id'],
-                    'response' => $data['response']
+                    'water_sentiment_id' => $complaint->id,
+                    'response' => $statusUpdate->status,
                 ]);
                 $created++;
             } catch (\Exception $e) {
                 Log::error('Failed to create notification', [
-                    'response_id' => $response->id,
+                    'status_update_id' => $statusUpdate->id,
                     'error' => $e->getMessage(),
-                    'data' => $data
                 ]);
                 $skipped++;
             }
