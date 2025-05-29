@@ -47,10 +47,9 @@
                             <label for="subcounty">Subcounty:</label>
                             <select class="form-control" id="subcounty" name="subcounty" required>
                                 <option value="">Select Subcounty</option>
-                                <option value="Dagoretti North">Dagoretti North</option>
-                                <option value="Dagoretti South">Dagoretti South</option>
-                                <option value="Embakasi Central">Embakasi Central</option>
-                                <!-- Add more subcounties -->
+                                @foreach ($subcounties as $subcounty)
+                                    <option value="{{ $subcounty }}">{{ $subcounty }}</option>
+                                @endforeach
                             </select>
                         </div>
 
@@ -58,10 +57,6 @@
                             <label for="ward">Ward:</label>
                             <select class="form-control" id="ward" name="ward" required>
                                 <option value="">Select Ward</option>
-                                <option value="Kilimani">Kilimani</option>
-                                <option value="Kawangware">Kawangware</option>
-                                <option value="Gatina">Gatina</option>
-                                <!-- Add more wards -->
                             </select>
                         </div>
 
@@ -127,6 +122,25 @@
                     $('#charCount').addClass('text-danger');
                 } else {
                     $('#charCount').removeClass('text-danger');
+                }
+            });
+
+            $('#subcounty').on('change', function() {
+                const subcounty = $(this).val();
+                $('#ward').empty().append('<option value="">Select Ward</option>');
+                if (subcounty) {
+                    $.ajax({
+                        url: `/api/wards/${subcounty}`,
+                        method: 'GET',
+                        success: function(response) {
+                            response.forEach(function(ward) {
+                                $('#ward').append(`<option value="${ward}">${ward}</option>`);
+                            });
+                        },
+                        error: function() {
+                            alert('Failed to load wards. Please try again.');
+                        }
+                    });
                 }
             });
 

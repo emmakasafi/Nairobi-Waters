@@ -146,6 +146,13 @@ Route::middleware('auth')->group(function () {
     Route::get('complaints', [ComplaintController::class, 'index'])->name('complaints.index');
     Route::get('complaints/create', [ComplaintController::class, 'create'])->name('complaints.create');
     Route::post('complaints', [ComplaintController::class, 'store'])->name('complaints.store');
+    Route::get('/complaints/{id}', [ComplaintController::class, 'show'])->name('complaints.show');
+    Route::get('/complaints/{id}/edit', [ComplaintController::class, 'edit'])->name('complaints.edit');
+    Route::put('/complaints/{id}', [ComplaintController::class, 'update'])->name('complaints.update');
+   Route::delete('/complaints/{id}', [ComplaintController::class, 'destroy'])->name('complaints.destroy');
+
+// API routes for dynamic loading
+Route::get('/api/wards/{subcounty}', [ComplaintController::class, 'getWards']);
 
     // Dashboard Route
     Route::get('dashboard', [DashboardController::class, 'index'])->middleware('verified')->name('dashboard');

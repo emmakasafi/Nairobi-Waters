@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use App\Models\WaterSentiment;
 use App\Models\Notification;
+use App\Models\NairobiLocation;
 
 class ComplaintController extends Controller
 {
@@ -23,7 +24,8 @@ class ComplaintController extends Controller
      */
     public function create()
     {
-        return view('complaints.create');
+        $subcounties = NairobiLocation::distinct()->pluck('subcounty')->toArray();
+        return view('complaints.create', compact('subcounties'));
     }
 
     /**
@@ -120,49 +122,12 @@ class ComplaintController extends Controller
         return redirect()->route('complaints.index')->with('success', 'Complaint deleted successfully');
     }
 
-
-    private function createCustomerNotification(Complaint $complaint, StatusUpdate $statusUpdate)
-{
-    $statusLabel = ucfirst(str_replace('_', ' ', $statusUpdate->new_status));
-    
-    Notification::create([
-        'user_id' => $complaint->user_id,
-        'type' => 'status_confirmation_required',
-        'title' => 'Complaint Status Update Confirmation Required',
-        'message' => "Your complaint #{$complaint->id} has been marked as '{$statusLabel}' by the assigned officer. Please confirm if you agree with this status change.",
-        'data' => json_encode([
-            'complaint_id' => $complaint->id,
-            'status_update_id' => $statusUpdate->id,
-            'new_status' => $statusUpdate->new_status,
-            'officer_notes' => $statusUpdate->officer_notes
-        ]),
-        'action_required' => true,
-        'expires_at' => now()->addDays(7) // Give customer 7 days to respond
-    ]);
-}
-
-private function createOfficerNotification(Complaint $complaint, StatusUpdate $statusUpdate, $responseType)
-{
-    $statusLabel = ucfirst(str_replace('_', ' ', $statusUpdate->new_status));
-    
-    if ($responseType === 'confirmed') {
-        $message = "Customer has confirmed the status change. Complaint is now '{$statusLabel}'.";
-        $title = 'Customer Confirmed Status Change';
-    } else {
-        $message = "Customer has rejected the status change. Please review their feedback.";
-        $title = 'Customer Rejected Status Change';
+    /**
+     * Get wards for a given subcounty.
+     */
+    public function getWards($subcounty)
+    {
+        $wards = NairobiLocation::where('subcounty', $subcounty)->pluck('ward')->toArray();
+        return response()->json($wards);
     }
-
-    Notification::create([
-        'user_id' => Auth::id(),
-        'type' => 'customer_response',
-        'title' => $title,
-        'message' => $message,
-        'data' => json_encode([
-            'complaint_id' => $complaint->id,
-            'status_update_id' => $statusUpdate->id,
-            'response_type' => $responseType
-        ])
-    ]);
-}
 }
