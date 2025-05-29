@@ -99,7 +99,11 @@
             <h2 class="text-4xl font-semibold text-gray-900 tracking-tight">Analytics Dashboard</h2>
             <p class="text-gray-600 mt-2">Real-time water complaints monitoring and intelligent analysis</p>
             <nav class="text-sm text-gray-500 mt-2">
-                <a href="{{ route('home') }}" class="hover:text-blue-600">Home</a> / <span>Dashboard</span>
+                <a href="#" class="nav-link {{ request()->is('dashboard') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-tachometer-alt"></i>
+                            <p>Dashboard</p>
+                </a>
+
             </nav>
         </div>
 

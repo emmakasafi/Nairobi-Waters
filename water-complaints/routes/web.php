@@ -28,11 +28,6 @@ Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
 
-// Home Route (Authenticated)
-Route::get('/home', function () {
-    return view('home');
-})->middleware(['auth'])->name('home');
-
 // Registration Routes
 Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
 Route::post('/register', [RegisteredUserController::class, 'store']);
@@ -87,10 +82,10 @@ Route::prefix('customer')->name('customer.')->group(function () {
         Route::post('logout', [CustomerLogoutController::class, 'logout'])->name('logout');
 
         // Notification Routes
-        Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
-        Route::get('notifications/count', [NotificationController::class, 'getNotificationCount'])->name('notifications.count');
-        Route::post('notifications/{notification}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
-        Route::post('notifications/{notification}/respond', [NotificationController::class, 'respond'])->name('notifications.respond');
+        Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::post('/notifications/{notification}/respond', [NotificationController::class, 'respond'])->name('notifications.respond');
+        Route::get('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
+        Route::get('/notifications/count', [NotificationController::class, 'getNotificationCount'])->name('notifications.count');
     });
 });
 

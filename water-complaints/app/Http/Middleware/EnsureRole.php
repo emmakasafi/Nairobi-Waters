@@ -15,7 +15,7 @@ class EnsureRole
         }
 
         if (!in_array(Auth::user()->role, $roles)) {
-            return redirect()->route('home')->with('error', 'You do not have permission to access this page.');
+            return redirect()->route('welcome')->with('error', 'You do not have permission to access this page.');
         }
 
         return $next($request);

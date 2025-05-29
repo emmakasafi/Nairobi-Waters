@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Laravel\Scout\Searchable;
@@ -11,6 +10,8 @@ class WaterSentiment extends Model
 
     protected $casts = [
         'timestamp' => 'datetime',
+        'resolved_at' => 'datetime',
+        'closed_at' => 'datetime',
     ];
 
     protected $fillable = [
@@ -30,7 +31,11 @@ class WaterSentiment extends Model
         'entity_type',
         'entity_name',
         'assigned_to',
-        'department_id', // if you're associating this with a department
+        'department_id',
+        'officer_notes',
+        'pending_status_update_id',
+        'resolved_at',
+        'closed_at',
     ];
 
     public function toSearchableArray()
@@ -53,27 +58,47 @@ class WaterSentiment extends Model
         ];
     }
 
-    /**
-     * The officer assigned to this complaint.
-     */
     public function assignedOfficer()
     {
         return $this->belongsTo(User::class, 'assigned_to');
     }
 
-    /**
-     * The customer who submitted the complaint.
-     */
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    /**
-     * Optional: Department this complaint belongs to.
-     */
     public function department()
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function statusUpdates()
+    {
+        return $this->hasMany(StatusUpdate::class, 'water_sentiment_id');
+    }
+
+    public static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (!$model->user_id && $model->user_email) {
+                $user = User::where('email', $model->user_email)->first();
+                if ($user) {
+                    $model->user_id = $user->id;
+                    \Log::info('Synced user_id from user_email during creation', [
+                        'water_sentiment_id' => $model->id ?? 'new',
+                        'user_id' => $user->id,
+                        'user_email' => $model->user_email,
+                    ]);
+                } else {
+                    \Log::warning('No user found for user_email during creation', [
+                        'water_sentiment_id' => $model->id ?? 'new',
+                        'user_email' => $model->user_email,
+                    ]);
+                }
+            }
+        });
     }
 }
