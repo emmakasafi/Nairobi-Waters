@@ -102,7 +102,11 @@ Route::prefix('officer')->name('officer.')->group(function () {
         Route::get('complaints/{complaint}', [OfficerComplaintController::class, 'show'])->name('officer.show');
         Route::post('complaints/{complaint}/update-status', [OfficerComplaintController::class, 'updateComplaintStatus'])->name('officer.updateStatus');
         Route::get('complaints/{complaint}/status-options', [OfficerComplaintController::class, 'getAvailableStatusOptions'])->name('officer.getStatusOptions');
-
+        Route::get('/notifications', [OfficerComplaintController::class, 'notifications'])->name('officer.notifications.index');
+        Route::post('/notifications/{notification}/respond', [OfficerComplaintController::class, 'respondToCustomer'])->name('officer.notifications.respond');
+        Route::post('/notifications/{notification}/mark-as-read', [OfficerComplaintController::class, 'markAsRead'])->name('officer.notifications.markAsRead');
+        Route::get('/notifications/count', [OfficerComplaintController::class, 'getNotificationCount'])->name('officer.notifications.count');
+        Route::get('/notifications/list', [OfficerComplaintController::class, 'getNotificationsList'])->name('officer.notifications.list');
         // Officer Resource Routes
         Route::resource('officer', OfficerController::class)->names([
             'index' => 'officer.index',
