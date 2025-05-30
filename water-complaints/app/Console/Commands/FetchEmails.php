@@ -42,9 +42,9 @@ class FetchEmails extends Command
             $subject = $message->getSubject();
             $body = $message->getTextBody();
 
-            if ($this->isWaterComplaint($subject, $body)) {
+            if ($this->isWaterComplaint($subject, $body, $message)) {
                 $this->info("✅ Water-related email found: $subject");
-                $this->analyzeAndStore($body);
+                $this->analyzeAndStore($body, $message);
                 $processedCount++;
                 $message->setFlag('Seen'); // Mark email as read
             } else {
@@ -59,8 +59,10 @@ class FetchEmails extends Command
         }
     }
 
-    private function isWaterComplaint($subject, $body)
+    private function isWaterComplaint($subject, $body, $message)
     {
+        // Combine subject and body for keyword check
+        $body = $body ?: $message->getHTMLBody() ?: '';
         $keywords = ['water', 'billing', 'shortage', 'leakage', 'sewer', 'meter', 'supply', 'pressure', 'pipeline', 'contamination', 'wastewater'];
         
         foreach ($keywords as $keyword) {
@@ -71,40 +73,70 @@ class FetchEmails extends Command
         return false;
     }
 
-    private function analyzeAndStore($complaintText)
-{
-    $this->info("Sending complaint for analysis...");
+    private function analyzeAndStore($complaintText, $message)
+    {
+        // Use HTML body or subject if text body is empty
+        $complaintText = $complaintText ?: $message->getHTMLBody() ?: $message->getSubject();
+        $complaintText = strip_tags($complaintText);
+        $this->info("Sending complaint for analysis: '$complaintText'");
 
-    try {
-        $response = Http::timeout(60)->post('http://127.0.0.1:5001/analyze', ['complaint' => $complaintText]);
+        if (empty($complaintText)) {
+            $this->error("❌ Complaint text is empty before sending to API");
+            return;
+        }
 
-        if ($response->successful()) {
-            $data = $response->json();
-
-            // Convert sentiment to short form
-            $sentimentMap = [
-                'positive' => 'pos',
-                'negative' => 'neg',
-                'neutral' => 'neu'
-            ];
-            $shortSentiment = $sentimentMap[$data['sentiment']] ?? 'neu'; 
-
-            WaterSentiment::create([
-                'original_caption'   => substr($complaintText, 0, 255),
-                'processed_caption' => substr($data['processed_caption'], 0, 255),
-                'timestamp' => now(),
-                'overall_sentiment' => $shortSentiment, 
-                'complaint_category' => substr($data['category'], 0, 100),
+        try {
+            // Send as form data instead of JSON
+            $response = Http::asForm()->timeout(60)->post('http://127.0.0.1:5001/analyze', [
+                'complaint' => $complaintText,
+                'user_email' => $message->getFrom()[0]->mail ?? 'default@example.com',
+                'user_name' => $message->getFrom()[0]->personal ?? 'Unknown',
+                'user_phone' => '',
+                'subcounty' => '',
+                'ward' => '',
+                'entity_type' => 'individual',
+                'entity_name' => $message->getFrom()[0]->personal ?? 'Unknown',
                 'source' => 'email'
             ]);
 
-            $this->info("✅ Complaint stored successfully with sentiment: $shortSentiment");
-        } else {
-            $this->error("❌ Failed to analyze complaint.");
-        }
-    } catch (\Exception $e) {
-        $this->error("❌ Error analyzing complaint: " . $e->getMessage());
-    }
-}
+            $this->info("Response status: " . $response->status());
+            $this->info("Response body: " . $response->body());
 
+            if ($response->successful()) {
+                $data = $response->json();
+
+                $sentimentMap = [
+                    'positive' => 'pos',
+                    'negative' => 'neg',
+                    'neutral' => 'neu'
+                ];
+                $shortSentiment = $sentimentMap[$data['sentiment']] ?? 'neu';
+
+                WaterSentiment::create([
+                    'original_caption' => substr($complaintText, 0, 255),
+                    'processed_caption' => substr($data['processed_caption'], 0, 255),
+                    'timestamp' => now(),
+                    'overall_sentiment' => $shortSentiment,
+                    'complaint_category' => substr($data['category'], 0, 100),
+                    'source' => 'email',
+                    'subcounty' => '',
+                    'ward' => '',
+                    'user_id' => 1, // Default user_id, aligned with Flask
+                    'user_name' => $message->getFrom()[0]->personal ?? 'Unknown',
+                    'user_email' => $message->getFrom()[0]->mail ?? 'default@example.com',
+                    'user_phone' => '',
+                    'status' => 'pending',
+                    'entity_type' => 'individual',
+                    'entity_name' => $message->getFrom()[0]->personal ?? 'Unknown',
+                    'department_id' => $data['department_id']
+                ]);
+
+                $this->info("✅ Complaint stored successfully with sentiment: $shortSentiment");
+            } else {
+                $this->error("❌ Failed to analyze complaint. Status: " . $response->status() . ", Body: " . $response->body());
+            }
+        } catch (\Exception $e) {
+            $this->error("❌ Error analyzing complaint: " . $e->getMessage());
+        }
+    }
 }

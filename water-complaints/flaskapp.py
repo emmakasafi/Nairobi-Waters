@@ -170,6 +170,7 @@ def analyze():
     try:
         data = request.form  # Use request.form for form data
         complaint_text = data.get("complaint", "").strip()
+        logging.info(f"Received form data: {dict(request.form)}")  # Log form data for debugging
         logging.info(f"Received complaint text: {complaint_text}")
 
         if not complaint_text:
@@ -192,8 +193,8 @@ def analyze():
                 user_id = user.id
                 logging.info(f"Fetched user_id {user_id} for email {user_email}")
             else:
-                logging.warning(f"No user found for email {user_email}")
-                return jsonify({"error": "No user found for provided email"}), 400
+                user_id = 1  # Default user_id for emails or unknown users
+                logging.warning(f"No user found for email {user_email}, using default user_id {user_id}")
 
         if not user_id:
             logging.error("No valid user_id provided or found")
@@ -206,7 +207,7 @@ def analyze():
             timestamp=datetime.now(timezone.utc),
             overall_sentiment=result["sentiment"],
             complaint_category=result["category"],
-            source="web_form",
+            source="email" if data.get("source") == "email" else "web_form",  # Dynamic source
             subcounty=data.get("subcounty", ""),
             ward=data.get("ward", ""),
             user_id=user_id,

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Laravel\Scout\Searchable;
@@ -8,6 +9,9 @@ use App\Models\User;
 class WaterSentiment extends Model
 {
     use Searchable;
+
+    // Disable Laravel's automatic timestamps
+    public $timestamps = false;
 
     protected $casts = [
         'timestamp' => 'datetime',

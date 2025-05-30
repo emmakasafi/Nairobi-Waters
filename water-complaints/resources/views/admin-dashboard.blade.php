@@ -114,20 +114,23 @@
                 <p class="text-gray-600 mt-2">Total Complaints</p>
                 <a href="{{ route('water_sentiments.index') }}" class="text-blue-600 hover:underline text-sm mt-2 block">View Details</a>
             </div>
-            <div class="card p-6 text-center">
-                <h3 class="text-3xl font-bold text-green-600">{{ $complaintStatuses->where('status', 'Resolved')->first()->count ?? 0 }}</h3>
-                <p class="text-gray-600 mt-2">Resolved</p>
-                <a href="{{ route('water_sentiments.index') }}?status=Resolved" class="text-blue-600 hover:underline text-sm mt-2 block">View Details</a>
+<!-- Twitter -->
+            <div class="card bg-white rounded-lg shadow-lg p-6 text-center">
+                <h3 class="text-3xl font-bold text-green-600">{{ $sourceCounts['Twitter'] ?? 0 }}</h3>
+                <p class="text-gray-600 mt-2">Twitter</p>
+                <a href="{{ route('water_sentiments.index') }}?source=Twitter" class="text-blue-600 hover:underline text-sm mt-2 block">View Details</a>
             </div>
-            <div class="card p-6 text-center">
-                <h3 class="text-3xl font-bold text-yellow-600">{{ $complaintStatuses->where('status', 'Pending')->first()->count ?? 0 }}</h3>
-                <p class="text-gray-600 mt-2">Pending</p>
-                <a href="{{ route('water_sentiments.index') }}?status=Pending" class="text-blue-600 hover:underline text-sm mt-2 block">View Details</a>
+            <!-- Email -->
+            <div class="card bg-white rounded-lg shadow-lg p-6 text-center">
+                <h3 class="text-3xl font-bold text-blue-600">{{ $sourceCounts['email'] ?? 0 }}</h3>
+                <p class="text-gray-600 mt-2">Email</p>
+                <a href="{{ route('water_sentiments.index') }}?source=email" class="text-blue-600 hover:underline text-sm mt-2 block">View Details</a>
             </div>
-            <div class="card p-6 text-center">
-                <h3 class="text-3xl font-bold text-red-600">{{ $complaintStatuses->where('status', 'Critical')->first()->count ?? 0 }}</h3>
-                <p class="text-gray-600 mt-2">Critical</p>
-                <a href="{{ route('water_sentiments.index') }}?status=Critical" class="text-blue-600 hover:underline text-sm mt-2 block">View Details</a>
+            <!-- Departments -->
+            <div class="card bg-white rounded-lg shadow-lg p-6 text-center">
+                <h3 class="text-3xl font-bold text-purple-600">{{ $departmentCount }}</h3>
+                <p class="text-gray-600 mt-2">Departments</p>
+                <a href="{{ route('departments.index') }}?department_id=not_null" class="text-blue-600 hover:underline text-sm mt-2 block">View Details</a>
             </div>
         </div>
 

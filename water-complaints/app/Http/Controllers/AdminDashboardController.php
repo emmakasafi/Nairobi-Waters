@@ -38,7 +38,8 @@ class AdminDashboardController extends Controller
                 'status',
                 'user_name',
                 'user_email',
-                'user_phone'
+                'user_phone',
+                'department_id' // Added for department count
             );
 
         // Base query for TwitterData, mapping to the same fields
@@ -55,7 +56,8 @@ class AdminDashboardController extends Controller
                 DB::raw('NULL::text as status'),
                 DB::raw('NULL::text as user_name'),
                 DB::raw('NULL::text as user_email'),
-                DB::raw('NULL::text as user_phone')
+                DB::raw('NULL::text as user_phone'),
+                DB::raw('NULL::integer as department_id')
             );
 
         // Combine queries using UNION
@@ -153,7 +155,7 @@ class AdminDashboardController extends Controller
         // Total number of complaints with filters
         $totalComplaints = $filteredQuery->count();
 
-        // Fetch complaint statuses without default timestamp ordering
+        // Fetch complaint statuses
         $complaintStatuses = $this->applyFilters($request, false)
             ->select('status', DB::raw('COUNT(*) as count'))
             ->groupBy('status')
@@ -166,7 +168,38 @@ class AdminDashboardController extends Controller
                 ];
             });
 
-        // Fetch sentiment data without default timestamp ordering
+        // Fetch source counts
+        $sourceCounts = $this->applyFilters($request, false)
+            ->select('source', DB::raw('COUNT(*) as count'))
+            ->groupBy('source')
+            ->orderBy('count', 'desc')
+            ->get()
+            ->pluck('count', 'source'); // Changed to key-value array
+
+        // Fetch department count (complaints with non-null department_id from water_sentiments only)
+        $departmentCount = DB::table('water_sentiments')
+            ->when($request->has('category') && $request->category && $request->category !== 'All Categories', function ($q) use ($request) {
+                $q->where('complaint_category', $request->category);
+            })
+            ->when($request->has('subcounty') && $request->subcounty && $request->subcounty !== 'All Subcounties', function ($q) use ($request) {
+                $q->where('subcounty', $request->subcounty);
+            })
+            ->when($request->has('ward') && $request->ward && $request->ward !== 'All Wards', function ($q) use ($request) {
+                $q->where('ward', $request->ward);
+            })
+            ->when($request->has('sentiment') && $request->sentiment && $request->sentiment !== 'All Sentiments', function ($q) use ($request) {
+                $q->where('overall_sentiment', $request->sentiment);
+            })
+            ->when($request->has('source') && $request->source && $request->source !== 'All Sources', function ($q) use ($request) {
+                $q->where('source', $request->source);
+            })
+            ->when($request->has('start_date') && $request->has('end_date') && $request->start_date && $request->end_date, function ($q) use ($request) {
+                $q->whereBetween('timestamp', [$request->start_date, $request->end_date]);
+            })
+            ->whereNotNull('department_id')
+            ->count();
+
+        // Fetch sentiment data
         $sentimentData = $this->applyFilters($request, false)
             ->select('overall_sentiment', DB::raw('COUNT(*) as count'))
             ->groupBy('overall_sentiment')
@@ -179,7 +212,7 @@ class AdminDashboardController extends Controller
                 ];
             });
 
-        // Fetch sentiment trend data without default timestamp ordering
+        // Fetch sentiment trend data
         $sentimentTrendData = $this->applyFilters($request, false)
             ->select(DB::raw('DATE(timestamp) as date'), DB::raw('COUNT(*) as count'), 'overall_sentiment')
             ->groupBy('date', 'overall_sentiment')
@@ -193,7 +226,7 @@ class AdminDashboardController extends Controller
                 ];
             });
 
-        // Fetch complaints per subcounty without default timestamp ordering
+        // Fetch complaints per subcounty
         $complaintsPerSubcounty = $this->applyFilters($request, false)
             ->select('subcounty', DB::raw('COUNT(*) as count'))
             ->groupBy('subcounty')
@@ -206,7 +239,7 @@ class AdminDashboardController extends Controller
                 ];
             });
 
-        // Fetch complaints per ward without default timestamp ordering
+        // Fetch complaints per ward
         $complaintsPerWard = $this->applyFilters($request, false)
             ->select('ward', DB::raw('COUNT(*) as count'))
             ->groupBy('ward')
@@ -219,7 +252,7 @@ class AdminDashboardController extends Controller
                 ];
             });
 
-        // Fetch complaints per category without default timestamp ordering
+        // Fetch complaints per category
         $complaintsPerCategory = $this->applyFilters($request, false)
             ->select('complaint_category', DB::raw('COUNT(*) as count'))
             ->groupBy('complaint_category')
@@ -232,7 +265,7 @@ class AdminDashboardController extends Controller
                 ];
             });
 
-        // Fetch unique values for filters with sanitization
+        // Fetch unique values for filters
         $categories = $this->applyFilters($request, false)
             ->select('complaint_category')
             ->distinct()
@@ -283,18 +316,10 @@ class AdminDashboardController extends Controller
                 return htmlspecialchars($source, ENT_QUOTES, 'UTF-8');
             })->values();
 
-        // Fetch source counts for sourceChart
-        $sourceCounts = $this->applyFilters($request, false)
-            ->select('source', DB::raw('COUNT(*) as count'))
-            ->groupBy('source')
-            ->orderBy('count', 'desc')
-            ->get()
-            ->pluck('count');
-
         // Fetch departments
         $departments = Department::all();
 
-        // Total users and new users today (not filtered, as they are user-related)
+        // Total users and new users today
         $totalUsers = User::count();
         $newUsersToday = User::whereDate('created_at', today())->count();
 
@@ -315,22 +340,15 @@ class AdminDashboardController extends Controller
             'sources',
             'complaintStatuses',
             'departments',
-            'sourceCounts'
+            'sourceCounts',
+            'departmentCount'
         ));
     }
 
-    /**
-     * Display Twitter Data Dashboard.
-     *
-     * @param Request $request
-     * @return \Illuminate\View\View
-     */
+    // Other methods (twitterDashboard, getWardsBySubcounty, exportCsv, exportExcel, exportPdf, dashboard) remain unchanged
     public function twitterDashboard(Request $request)
     {
-        // Apply filters to Twitter data
         $filteredQuery = $this->applyTwitterFilters($request);
-
-        // Fetch recent Twitter complaints (top 5)
         $recentComplaints = $filteredQuery->orderBy('timestamp', 'desc')->take(5)->get()->map(function ($item) {
             return (object) [
                 'original_caption' => htmlspecialchars($item->original_caption ?? 'N/A', ENT_QUOTES, 'UTF-8'),
@@ -342,10 +360,8 @@ class AdminDashboardController extends Controller
             ];
         });
 
-        // Total number of Twitter complaints
         $totalComplaints = $filteredQuery->count();
 
-        // Sentiment data
         $sentimentData = $this->applyTwitterFilters($request, false)
             ->select('overall_sentiment', DB::raw('COUNT(*) as count'))
             ->groupBy('overall_sentiment')
@@ -358,7 +374,6 @@ class AdminDashboardController extends Controller
                 ];
             });
 
-        // Sentiment trend data
         $sentimentTrendData = $this->applyTwitterFilters($request, false)
             ->select(DB::raw('DATE(timestamp) as date'), DB::raw('COUNT(*) as count'), 'overall_sentiment')
             ->groupBy('date', 'overall_sentiment')
@@ -372,7 +387,6 @@ class AdminDashboardController extends Controller
                 ];
             });
 
-        // Complaints per category
         $complaintsPerCategory = $this->applyTwitterFilters($request, false)
             ->select('complaint_category', DB::raw('COUNT(*) as count'))
             ->groupBy('complaint_category')
@@ -385,7 +399,6 @@ class AdminDashboardController extends Controller
                 ];
             });
 
-        // Fetch unique values for filters
         $categories = $this->applyTwitterFilters($request, false)
             ->select('complaint_category')
             ->distinct()
@@ -417,12 +430,6 @@ class AdminDashboardController extends Controller
         ));
     }
 
-    /**
-     * Fetch wards for a given subcounty via AJAX.
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function getWardsBySubcounty(Request $request)
     {
         $subcounty = $request->query('subcounty');
